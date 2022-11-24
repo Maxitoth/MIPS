@@ -104,7 +104,7 @@ class Simulatore() :
     # Il dizionario diz_righe viene aggiornato con numero riga e riga del testo associata.
     
     def modifica_testo(self) :
-        with open('testoEsame.txt') as testo:
+        with open('testo.txt') as testo:
             self.righe = testo.readlines()
         due_punti = ':'
         virgola = ','
