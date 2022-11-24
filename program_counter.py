@@ -72,7 +72,7 @@ class Program_counter():
                 return indirizzo_text
         if istruzione == self.istruzione_la: # Simulo program counter
             if carattere_trovato or type(valore) == bool:
-                return
+                return indirizzo_text
             if self.range_meno_trenta <= valore <= self.range_sessanta:
                 if valore_con_tonda_trovato:
                     indirizzo_text += 4
