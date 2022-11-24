@@ -93,7 +93,8 @@ class Istruzioni:
         self.pc = registro.Registro("pc",4194300)
         self.pc_finale = 0
         self.ra = registro.Registro("$ra",0)
-    # Potrei aggiungere qua il registro at e poi aggiungerlo all'insieme registri in trova_la_soluzione
+        self.bool_program_counter = True
+    # Potrei aggiungere qua il registro at e poi aggiungerlo all'insieme registri in simula_codice_mips
     chiave = ""
     
     zero = "0"
@@ -103,6 +104,16 @@ class Istruzioni:
     stringa_lb_f = "0xffffff"
     stringa_lh_f = "0xffff"
     stringa_zero_x = "0x" 
+    
+    # il metodo si occupa di incrementare il program counter per ogni pseudoistruzione trovata
+    # solo se si vuole simulare il program counter
+    
+    def incrementa_program_counter(self):
+        if self.bool_program_counter:
+            while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
+                self.pc.intero += 4
+                if self.pc.intero + 4 not in self.diz_indirizzi_text:
+                    break
     
     
     # Ogni istruzione simula l'andamento del program counter grazie alla corretta rappresentazione
@@ -117,10 +128,12 @@ class Istruzioni:
     # Il metodo si occupa di simulare le istruzioni mips or e ori
     
     def oor(self, tupla_valori):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)        
+        if self.bool_program_counter:
+            while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
+                self.pc.intero += 4
+                if self.pc.intero + 4 not in self.diz_indirizzi_text:
+                    break
         if type(tupla_valori[0]) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -147,10 +160,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare le istruzioni mips xor e xori
     
     def xor(self, tupla_valori):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(tupla_valori[0]) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -177,10 +187,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare le istruzioni mips and e andi
     
     def aand(self, tupla_valori):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(tupla_valori[0]) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -207,10 +214,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips addu
     
     def addu(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!"  # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -231,10 +235,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips addi    
     
     def addi(self, registro_destinazione, registro_o_intero, secondo_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -251,10 +252,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips addiu
     
     def addiu(self, registro_destinazione, registro_o_intero, secondo_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -271,10 +269,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips add
     
     def add(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -295,10 +290,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips subi
     
     def subi(self, registro_destinazione, registro_o_intero, secondo_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -315,10 +307,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips sub
     
     def sub(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -339,10 +328,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips slt
     
     def slt(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -372,10 +358,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips lui
     
     def lui(self, registro_destinazione, intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -388,10 +371,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips sll       
     
     def sll(self, registro_destinazione, primo_registro_o_intero, secondo_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -410,10 +390,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips srl
     
     def srl(self, registro_destinazione, primo_registro_o_intero, secondo_intero): 
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         # Potrebbe non funzionare. Usa la stessa strutture del sll. Va testato
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
@@ -434,10 +411,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips sw
     
     def sw(self, primo_registro, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(primo_registro) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -458,10 +432,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips sh
     
     def sh(self, primo_registro, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(primo_registro) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -480,10 +451,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips sb
     
     def sb(self, primo_registro, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(primo_registro) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -500,10 +468,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips blt
     
     def blt(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = False
         if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
             if primo_registro_o_intero < secondo_registro_o_intero:
@@ -522,10 +487,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips bne
     
     def bne(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = False
         if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
             if primo_registro_o_intero != secondo_registro_o_intero:
@@ -544,10 +506,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips bge
     
     def bge(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = False
         if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
             if primo_registro_o_intero >= secondo_registro_o_intero:
@@ -566,10 +525,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips beq
     
     def beq(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = False
         if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
             if primo_registro_o_intero == secondo_registro_o_intero:
@@ -588,10 +544,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips beqz
     
     def beqz(self, primo_registro_o_intero, stringa):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = False
         if type(primo_registro_o_intero) == int:
             if primo_registro_o_intero == 0:
@@ -604,10 +557,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips j
     
     def j(self, stringa):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = True 
         return stringa, salto
     
@@ -615,11 +565,7 @@ class Istruzioni:
     
     def jal(self, stringa):
         pc_piu_quattro = True
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            pc_piu_quattro = False
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = True
         if pc_piu_quattro:
            self.pc.intero += 4 
@@ -630,11 +576,7 @@ class Istruzioni:
     
     def jalr(self, tupla_valori):
         pc_piu_quattro = True
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            pc_piu_quattro = False
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         salto = True
         intero = ""
         if pc_piu_quattro:
@@ -654,10 +596,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips move
     
     def move(self, registro_destinazione, registro_o_intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -674,10 +613,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips li
         
     def li(self, registro_destinazione, intero):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -692,10 +628,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips lb 
         
     def lb(self, registro_destinazione, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -713,10 +646,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips lbu
     
     def lbu(self, registro_destinazione, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -729,10 +659,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips lh
     
     def lh(self, registro_destinazione, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -755,10 +682,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips lhu
     
     def lhu(self, registro_destinazione, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -776,10 +700,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips lw
     
     def lw(self, registro_destinazione, chiave_in_diz):
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
@@ -805,10 +726,7 @@ class Istruzioni:
     # Il metodo si occupa di simulare l'istruzione mips la
     
     def la(self, registro_destinazione, indirizzo): 
-        while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-            self.pc.intero += 4
-            if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                break
+        Istruzioni.incrementa_program_counter(self)
         if type(registro_destinazione) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.

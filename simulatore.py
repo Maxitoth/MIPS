@@ -168,9 +168,9 @@ class Simulatore() :
     def trova_indirizzi_text_e_salti(self, bool_decode: bool):
         chiave = ""
         punto = '.'
-        diz_indirizzi_text = self.istruzioni.diz_indirizzi_text
+        diz_indirizzi_text = self.program_counter.diz_indirizzi_text
         diz_text = self.istruzioni.diz_text
-        indirizzo_text = self.istruzioni.pc.intero
+        indirizzo_text = self.program_counter.indirizzo_text
         aperta_tonda = "("
         zero_x = "0x"
         meno_zero_x= "-0x"
@@ -289,12 +289,13 @@ class Simulatore() :
                         else:
                             valore = int(penultimo_elemento)
                     elif penultimo_elemento.startswith(carattere_virgoletta):
-                        carattere_trovato = True 
-                self.program_counter.simula_program_counter(istruzione, indirizzo_text, diz_indirizzi_text, carattere_trovato, valore, valore_con_tonda_trovato)
+                        carattere_trovato = True
+                indirizzo_text = self.program_counter.simula_program_counter(istruzione, indirizzo_text, carattere_trovato, valore, valore_con_tonda_trovato)
                 break
         indirizzo_text += 4 # esecuzione ultima istruzione
         diz_indirizzi_text[indirizzo_text] = ""
         self.istruzioni.pc_finale = indirizzo_text 
+        self.istruzioni.diz_indirizzi_text = self.program_counter.diz_indirizzi_text
         #print(diz_text)
         
         # Il metodo si occupa di trovare data hazards, control hazards e mostrare come si comporta la pipeline ( a livello testuale).
@@ -720,9 +721,10 @@ class Simulatore() :
     # Otteniamo cosi un dizionario con tutti i dati.
     # ( Il program counter viene aggiornato per ogni istruzione trovata)
      
-    def simula_codice_mips(self,bool_decode: bool,bool_forwarding: bool):
+    def simula_codice_mips(self,bool_decode: bool, bool_forwarding: bool, bool_program_counter: bool):
         Simulatore.modifica_testo(self)
         Simulatore.trova_indirizzi_text_e_salti(self, bool_decode)
+        self.istruzioni.bool_program_counter = bool_program_counter
         diz_risultato = {}
         chiave_diz_ris = 1
         indice = 0
@@ -1308,7 +1310,7 @@ class Simulatore() :
      
      
 x = Simulatore()
-not_forwarding = x.simula_codice_mips(True, True)
+not_forwarding = x.simula_codice_mips(True, True, True)
 #forwarding = x.trova_la_soluzione(x.testo_modificato, x.diz_salti, x.insieme_istruzioni, x.istruzioni, x.diz_indirizzi, x.diz_righe, True)
 #print(not_forwarding)
 
