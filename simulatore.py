@@ -1310,11 +1310,10 @@ class Simulatore() :
      
      
 x = Simulatore()
-not_forwarding = x.simula_codice_mips(True, True, True)
-#forwarding = x.trova_la_soluzione(x.testo_modificato, x.diz_salti, x.insieme_istruzioni, x.istruzioni, x.diz_indirizzi, x.diz_righe, True)
-#print(not_forwarding)
+simulazione = x.simula_codice_mips(True, True, True)
+#print(simulazione)
 
-json_object = json.dumps(not_forwarding)
+json_object = json.dumps(simulazione)
  
 # Writing to sample.json
 with open("risultato.json", "w") as outfile:
