@@ -14,13 +14,13 @@ I dati di tipo .byte, .half, .word, .ascii, .asciiz sono gestiti. Ma ci sono alc
 
 Come scritto nel file simulatore.py non tutte le istruzioni mips sono simulabili.
 
-Le pseudoistruzioni non vengono incluse o aggiunte nel testo. Quindi se si esegue un salto ad un indirizzo di una pseudoistruzione ( possibile tramite istruzione jalr ) ci sarà sicuramente un errore. 
+Le pseudoistruzioni non vengono incluse o aggiunte nel testo. Quindi se si esegue un salto ad un indirizzo di una pseudoistruzione ( possibile tramite istruzione jalr ) ci sarà sicuramente un errore durante la simulazione del codice mips. 
 
 Per aggiungere istruzioni:
 
 In simulatore.py
 
-1) aggiungere l'istruzione nell'insieme insieme_istruzioni ( se l'istruzione é di tipo jump o branch aggiungerla anche all'insieme corrispondente)
+1) Aggiungere l'istruzione nell'insieme insieme_istruzioni ( se l'istruzione é di tipo jump o branch aggiungerla anche all'insieme corrispondente)
 Le istruzioni save e load dovrebbero essere tutte state simulate.
 Per le jump manca solo la jr.
 2) Le istruzioni di branch and link sono un caso particolare non gestito. Bisognerebbe molto probabilmente modificare il codice in trova_valori_per_pipeline. 
@@ -32,3 +32,8 @@ In program_counter.py
 Esempio: l'istruzione add, se sommato un numero che non é nel range da 32767 a -32768 genera 2 pseudoistruzioni.
 
 Posso poi mettere in insiemi comuni le istruzioni che hanno lo stesso numero di pseudoistruzioni per quelle determinate casistiche.
+
+In istruzioni_mips.py:
+
+  1) Aggiungere un metodo chiamandolo come l'istruzione mips da simulare.
+  2) Il metodo deve cominciare con
