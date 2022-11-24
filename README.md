@@ -1,6 +1,6 @@
 # MIPS
 
-Viene simulato il codice mips inserito nel file di testo testoEsame.txt. Questo per ottenere dati relativi alla pipeline.
+Viene simulato il codice mips inserito nel file di testo testo.txt. Questo per ottenere dati relativi alla pipeline.
 Il codice deve essere stato testato su Mars ( compilato ed eseguito). Deve risultare senza errori.
 
 Alla fine del file simulatore.py é presente un oggetto Simulatore e sotto viene compilato un json file con tutti i dati.
