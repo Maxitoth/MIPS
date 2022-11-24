@@ -129,11 +129,6 @@ class Istruzioni:
     
     def oor(self, tupla_valori):
         Istruzioni.incrementa_program_counter(self)        
-        if self.bool_program_counter:
-            while self.diz_indirizzi_text[self.pc.intero+4] == "": # Simulo program counter
-                self.pc.intero += 4
-                if self.pc.intero + 4 not in self.diz_indirizzi_text:
-                    break
         if type(tupla_valori[0]) == int:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
