@@ -36,4 +36,9 @@ Posso poi mettere in insiemi comuni le istruzioni che hanno lo stesso numero di 
 In istruzioni_mips.py:
 
   1) Aggiungere un metodo chiamandolo come l'istruzione mips da simulare.
-  2) Il metodo deve cominciare con
+  2) Il metodo deve sempre cominciare con Istruzioni.incrementa_program_counter(self) 
+  3) A seconda del tipo di istruzione prendere come riferimento istruzioni già implementate a meno che sia un nuovo tipo di istruzione.
+  4) Esempio su come iniziare: Se ho beq $t1, $t2, Cycl il metodo é di questo tipo: beq(registro_uno_o_intero_uno,registro_due_o_intero_due, stringa). Implemento i       vari controlli ( se ho un registro o un intero) e controllo se registro_uno_o_intero_uno == registro_due_o_intero_due. Siccome si tratta di un istruzione di salto     devo restituire un booleano (salto) a True o False oltre alla stringa. Per istruzioni non di salto il ragionamento è lo stesso solo che aggiorno l'intero del           registro (chiamato di solito registro_destinazione) e restituisco una stringa ( non serve farlo)
+  5) Se un istruzione può essere scritta in piu modi si usa una tupla ( tupla_valori). Bisogna prendere i valori dalla tupla ma il ragionamento è lo stesso.
+  6) Se l'istruzione permette salti nel testo senza uso di labels ma registri ( la jalr per esempio) bisognerà restituire un intero ( la stringa non é presente           nell'istruzione in questione e servirà l'implementazione del program counter)
+ 
