@@ -1,0 +1,19 @@
+.data
+S: .byte 0,7,8,9,0,-1
+.text
+main: la $a0, S  
+li $v0, 0  
+li $v1, 0  
+li $t1, -1  
+cycle: lb $s0, ($a0)            
+beq $s0, $t1, exit                                                
+beq $s0, $zero, endIf          
+andi $s0, $s0, 1      
+beq $s0, $zero, pari               
+addi $v1, $v1, 1    
+j endIf    
+pari: addi $v0, $v0, 1     
+endIf: addi $a0, $a0, 1                
+j cycle          
+exit: addi $v0, $zero, 10     
+syscall
