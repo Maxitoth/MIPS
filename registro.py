@@ -17,7 +17,7 @@ class Registro:
         self.stato_write_back = 5
         self.riga_registro = ""
         self.riga_precedente = ""
-        self.istruzione_precedente = ""
+        self.istruzione_precedente = "" 
         
         
     def vai_a_writeback(self): # Non utilizzato

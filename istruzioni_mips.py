@@ -119,11 +119,16 @@ class Istruzioni:
     # Ogni istruzione simula l'andamento del program counter grazie alla corretta rappresentazione
     # del dizionario diz_indirizzi_text ( quindi della parte .text di mars)
     
-    # Viene ritornata una stringa per ogni metodo. Questo in realtà è rindondante al momento.
+    # Viene ritornata una stringa per ogni metodo. Questo in realtà è ridondante al momento.
     
     # Quando si usa una tupla_valori è perchè l'istruzione mips associata puo avere diversi input.
     # Esempio: or $t1, $t1, 70
     #          or $t1, 70
+    
+    # I metodi che riguardano le istruzioni che eseguono salti devono sempre avere 2 output 
+    # tipicamente una stringa e poi un booleano ( la jalr ha un intero)
+    
+    # Le altre istruzioni devono assolutamente avere un unico output
     
     # Il metodo si occupa di simulare le istruzioni mips or e ori
     
