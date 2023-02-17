@@ -11,7 +11,7 @@ Inoltre si possono abilitare dei messaggi per ogni hazard trovato.
 
 Il simulatore ha i suoi limiti. Questi sono scritti in vari commenti all'inizio del file simulatore.py.
 
-I dati di tipo .byte, .half, .word, .ascii, .asciiz sono gestiti. Ma ci sono alcune complicazioni con ascii e asciiz durante l'analisi del testo.
+I dati di tipo .byte, .half, .word, .ascii, .asciiz sono gestiti. L'unico carattere da non utilizzare è 'µ' ( usato nell'analisi dei dati .ascii e .asciiz)
 
 Come scritto nel file simulatore.py non tutte le istruzioni mips sono simulabili.
 
