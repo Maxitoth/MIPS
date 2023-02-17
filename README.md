@@ -3,10 +3,11 @@
 Viene simulato il codice mips inserito nel file di testo testo.txt. Questo per ottenere dati relativi alla pipeline.
 Il codice deve essere stato testato su Mars ( compilato ed eseguito). Deve risultare senza errori.
 
-Alla fine del file simulatore.py é presente un oggetto Simulatore e sotto viene compilato un json file con tutti i dati.
+sul file main.py é presente un oggetto Simulatore e sotto viene compilato un json file con tutti i dati.
 
 Si può scegliere se eseguire di fare la simulazione con forwarding o meno, con le istruzioni branch a fase di decode o execute e se simulare il program counter.
-(booleani true,false in simula_codice_mips del simulatore)
+Inoltre si possono abilitare dei messaggi per ogni hazard trovato.
+(booleani true,false in simula_codice_mips del simulatore da cambiare nell'oggetto simulatore nel file main.py)
 
 Il simulatore ha i suoi limiti. Questi sono scritti in vari commenti all'inizio del file simulatore.py.
 
