@@ -38,6 +38,7 @@
 import registro
 import istruzioni_mips
 import program_counter
+import pandas as pd
 
 
 # Il metodo si occupa di chiamare il metodo della classe Istruzioni associato al nome relativo a nome_istruzione.
@@ -81,6 +82,58 @@ def chiama_istruzioni_mips(oggetto_classe_istruzioni, nome_istruzione, prima_pos
             return metodo(prima_posizione, seconda_posizione)
         else:    
             return metodo(prima_posizione, seconda_posizione, terza_posizione) 
+        
+# Il metodo si occupa di generare un file excel con uno o due fogli
+# Se i booleani sono a False il metodo non fa nulla 
+# Altrimenti possono essere generati due fogli per un file excel: uno per il risultato dell'esecuzione del codice mips
+# e uno per il risultato dei data hazards e control hazards possibili.
+        
+def genera_excel(json_object_pipeline, json_object_hazards, bool_forwarding: bool, bool_excel_pipeline: bool, bool_excel_hazards: bool):
+    if bool_forwarding:
+        nome_excel = 'risultato_con_forwarding.xlsx'
+    else:
+        nome_excel = 'risultato_senza_forwarding.xlsx'
+    if bool_excel_pipeline:
+        df_pipeline = pd.read_json(json_object_pipeline).transpose()
+        writer_pipeline = pd.ExcelWriter(nome_excel)
+        df_pipeline.to_excel(writer_pipeline, sheet_name='Pipeline', index=False, na_rep='NaN')
+        
+        # Per avere un excel con colonne dinamicamente aggiustate
+        # set_column non funziona se non si ha installato xlswriter
+        # Utilizzare pip install xlsxwriter 
+        for column in df_pipeline:
+            column_width = max(df_pipeline[column].astype(str).map(len).max(), len(column))
+            col_idx = df_pipeline.columns.get_loc(column)
+            writer_pipeline.sheets['Pipeline'].set_column(col_idx, col_idx, column_width) 
+        if not bool_excel_hazards:
+            writer_pipeline.close()
+        
+    if bool_excel_hazards:
+        df_hazards = pd.read_json(json_object_hazards)
+        if not bool_excel_pipeline:
+            writer_hazards = pd.ExcelWriter(nome_excel)
+            df_hazards.to_excel(writer_hazards, sheet_name='Hazards', index=False, na_rep='NaN')
+        
+            # Per avere un excel con colonne dinamicamente aggiustate
+            # set_column non funziona se non si ha installato xlswriter
+            # Utilizzare pip install xlsxwriter 
+            for column in df_hazards:
+                column_width = max(df_hazards[column].astype(str).map(len).max(), len(column))
+                col_idx = df_hazards.columns.get_loc(column)
+                writer_hazards.sheets['Hazards'].set_column(col_idx, col_idx, column_width)     
+            writer_hazards.close()
+        else:
+            df_hazards.to_excel(writer_pipeline, sheet_name='Hazards', index=False, na_rep='NaN')
+        
+            # Per avere un excel con colonne dinamicamente aggiustate
+            # set_column non funziona se non si ha installato xlswriter
+            # Utilizzare pip install xlsxwriter 
+            for column in df_hazards:
+                column_width = max(df_hazards[column].astype(str).map(len).max(), len(column))
+                col_idx = df_hazards.columns.get_loc(column)
+                writer_pipeline.sheets['Hazards'].set_column(col_idx, col_idx, column_width)     
+            writer_pipeline.close()
+        
 
 # La classe Simulatore si occupa di simulare il codice mips.
 
@@ -104,6 +157,15 @@ class Simulatore() :
         self.program_counter = program_counter.Program_counter()
         self.diz_indirizzi = {}
         self.diz_righe = {}
+        self.bool_forwarding = False
+        self.ciclo_di_clock = 0
+        self.diz_hazards = {}
+        self.bool_clock_trovato = False
+        self.bool_pipeline_wb = False
+        self.bool_pipeline_mem = False
+        self.bool_pipeline_ex = False
+        self.bool_pipeline_id = False
+        self.bool_pipeline_if = False
         
     # Il metodo si occupa di modificare il file di testo associato per ottenere una lista di liste (ogni lista é una riga del testo)
     # Il dizionario diz_righe viene aggiornato con numero riga e riga del testo associata.
@@ -357,7 +419,10 @@ class Simulatore() :
    
     def trova_valori_per_pipeline(self,istruzione_precedente: str, indice_riga_precedente: int, indice_riga_pre_precedente: int, program_counter: int,totale_clocks: int, nome_registro_tonde: str, indice: int, lista_indice: list, 
                                   bool_salto: bool, bool_saltato: bool, data_hazards_totali: int, control_hazards_totali: int, control_hazards: int, bool_decode: bool, bool_forwarding: bool, bool_messaggi_hazards: bool, bool_analizza_con_esecuzione: bool):
-        lista_valori_diz = []
+        # lista_valori_diz = []
+        lista_valori_diz = {"Riga": 0, "Program Counter": 0, "Istruzione Mips": "", "Rappresentazione Pipeline": "", "Numero Data Hazards": 0, "Numero Control Hazards": 0, "Valore Clock": 0, "Hazard Trovato": [] }
+        if bool_messaggi_hazards:
+            lista_valori_diz["Messaggio"] = ""
         istruzione = ""
         riga = ""
         primo_registro_da_controllare = ""
@@ -380,9 +445,12 @@ class Simulatore() :
                 reg.cambia_fase()
         totale_clocks += 1
         riga = self.diz_righe[indice+1]
-        lista_valori_diz.append(indice+1) # valore riga del codice mips
-        lista_valori_diz.append(program_counter)
-        lista_valori_diz.append(riga) # codice mips in quella riga
+        # lista_valori_diz.append(indice+1) # valore riga del codice mips
+        # lista_valori_diz.append(program_counter)
+        # lista_valori_diz.append(riga) # codice mips in quella riga
+        lista_valori_diz["Riga"] = indice+1 # valore riga del codice mips
+        lista_valori_diz["Program Counter"] = program_counter # valore program counter ( corretto solo se program counter abilitato)
+        lista_valori_diz["Istruzione Mips"] = riga # codice mips in quella riga
         if lista_indice[0] not in self.insieme_istruzioni:
             lista_indice = lista_indice[1:]
         if lista_indice[0] in self.istruzioni_jump: # caso jump
@@ -481,35 +549,46 @@ class Simulatore() :
                             reg.riga_registro = indice+1
                             break
             if not bool_forwarding:
-                lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_not_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                # lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_not_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                lista_valori_diz["Rappresentazione Pipeline"] = data_hazards*(control_hazards+stalli_primo_registro_not_forwarding)+stringa_pipeline # rappresentazione pipeline
                 data_hazards_totali += stalli_primo_registro_not_forwarding
-                totale_clocks += stalli_primo_registro_not_forwarding+control_hazards
-                lista_valori_diz.append(stalli_primo_registro_not_forwarding) # data hazards per quella istruzione
-                lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
-                lista_valori_diz.append(totale_clocks) # valore clock per quella istruzione
+                totale_clocks += stalli_primo_registro_not_forwarding+control_hazards   
+                # lista_valori_diz.append(stalli_primo_registro_not_forwarding) # data hazards per quella istruzione
+                # lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
+                # lista_valori_diz.append(totale_clocks) # valore clock per quella istruzione
+                lista_valori_diz["Numero Data Hazards"] = stalli_primo_registro_not_forwarding # data hazards per quella istruzione
+                lista_valori_diz["Numero Control Hazards"] = control_hazards # control hazards per quella istruzione
+                lista_valori_diz["Valore Clock"] = totale_clocks # valore clock per quella istruzione
                 if tupla_hazard_primo_registro != "" and stalli_primo_registro_not_forwarding > 0:
-                    lista_valori_diz.append(tupla_hazard_primo_registro)
+                    # lista_valori_diz.append(tupla_hazard_primo_registro)
+                    lista_valori_diz["Hazard Trovato"] = tupla_hazard_primo_registro 
                     nome_registro = tupla_hazard_primo_registro[2]
                     riga_registro = str(tupla_hazard_primo_registro[0])
                     riga_attuale = str(tupla_hazard_primo_registro[1])
                     if bool_messaggi_hazards: # Se i messaggi sono abilitati allora verranno inseriti nella soluzione
                         if bool_branch and not bool_decode:
-                            messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di memory quando l'istruzione in riga "+riga_attuale+" sarà in fase di execute."
+                            messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di memory l'istruzione in riga "+riga_attuale+" è già in fase di execute."
                         else:
                             if stalli_primo_registro_not_forwarding == 2:
-                                messaggio_data_hazards = "Ci sono due data hazards perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di execute quando l'istruzione in riga "+riga_attuale+" sarà in fase di decode."
+                                messaggio_data_hazards = "Ci sono due data hazards perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di execute l'istruzione in riga "+riga_attuale+" è già in fase di decode."
                             else:
-                                messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione eseguita precedentemente in riga "+riga_registro+". L'istruzione è in fase di execute e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di memory quando l'istruzione in riga "+riga_attuale+" sarà in fase di decode."
-                        lista_valori_diz.append(messaggio_data_hazards)
+                                messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione eseguita precedentemente in riga "+riga_registro+". L'istruzione è in fase di execute e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di memory l'istruzione in riga "+riga_attuale+" è già in fase di decode."
+                        # lista_valori_diz.append(messaggio_data_hazards)
+                        lista_valori_diz["Messaggio"] = messaggio_data_hazards
             else:
-                lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                # lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                lista_valori_diz["Rappresentazione Pipeline"] = data_hazards*(control_hazards+stalli_primo_registro_forwarding)+stringa_pipeline # rappresentazione pipeline
                 data_hazards_totali += stalli_primo_registro_forwarding
                 totale_clocks += stalli_primo_registro_forwarding+control_hazards
-                lista_valori_diz.append(stalli_primo_registro_forwarding) # data hazards per quella istruzione
-                lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
-                lista_valori_diz.append(totale_clocks) # valore clock per quella istruzione   
+                # lista_valori_diz.append(stalli_primo_registro_forwarding) # data hazards per quella istruzione
+                # lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
+                # lista_valori_diz.append(totale_clocks) # valore clock per quella istruzione
+                lista_valori_diz["Numero Data Hazards"] = stalli_primo_registro_forwarding # data hazards per quella istruzione
+                lista_valori_diz["Numero Control Hazards"] = control_hazards # control hazards per quella istruzione
+                lista_valori_diz["Valore Clock"] = totale_clocks # valore clock per quella istruzione
                 if tupla_hazard_primo_registro != "" and stalli_primo_registro_forwarding > 0:
-                    lista_valori_diz.append(tupla_hazard_primo_registro) 
+                    # lista_valori_diz.append(tupla_hazard_primo_registro) 
+                    lista_valori_diz["Hazard Trovato"] = tupla_hazard_primo_registro
                     nome_registro = tupla_hazard_primo_registro[2]
                     riga_registro = str(tupla_hazard_primo_registro[0])
                     riga_attuale = str(tupla_hazard_primo_registro[1])
@@ -524,8 +603,95 @@ class Simulatore() :
                                 messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di memory per poter passare il nuovo valore del registro, ma una volta raggiunta questa fase l'istruzione in riga "+riga_attuale+" è gia in fase di execute."       
                         else: # Caso particolare per le altre istruzioni, si ha uno stallo solo con branch eseguite a fase di decode
                             messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di execute per poter passare il nuovo valore del registro, ma una volta raggiunta questa fase l'istruzione in riga "+riga_attuale+" è gia in fase di decode."       
-                        lista_valori_diz.append(messaggio_data_hazards)           
+                        # lista_valori_diz.append(messaggio_data_hazards)    
+                        lista_valori_diz["Messaggio"] = messaggio_data_hazards
+                        
+            # Analizzo le istruzioni nella pipeline durante un determinato ciclo di clock
+            if self.ciclo_di_clock != 0: # Non vengono risolti i casi con clock minore di 5
+                if totale_clocks >= self.ciclo_di_clock and not self.bool_clock_trovato:
+                    if self.ciclo_di_clock == totale_clocks: # caso standard
+                        self.bool_clock_trovato = True
+                        self.diz_hazards["WB"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_wb = True
+                    elif self.ciclo_di_clock == totale_clocks - 1:
+                        self.bool_clock_trovato = True
+                        self.diz_hazards["WB"] = "bolla"
+                        self.bool_pipeline_wb = True
+                        self.diz_hazards["MEM"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_mem = True
+                    elif self.ciclo_di_clock == totale_clocks - 2:
+                        self.bool_clock_trovato = True
+                        self.diz_hazards["WB"] = "bolla"
+                        self.bool_pipeline_wb = True
+                        self.diz_hazards["MEM"] = "bolla"
+                        self.bool_pipeline_mem = True
+                        self.diz_hazards["EX"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_ex = True
+                elif self.bool_clock_trovato:
+                    if lista_valori_diz["Numero Control Hazards"] == 1 or lista_valori_diz["Numero Data Hazards"] == 1:
+                        if self.bool_pipeline_if:
+                            self.ciclo_di_clock = 0 # ho finito la ricerca
+                        elif self.bool_pipeline_id:
+                            self.diz_hazards["IF"] = "bolla"
+                            self.bool_pipeline_if = True
+                        elif self.bool_pipeline_ex:
+                            self.diz_hazards["ID"] = "bolla"
+                            self.bool_pipeline_id = True
+                            self.diz_hazards["IF"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_if = True
+                        elif self.bool_pipeline_mem:
+                            self.diz_hazards["EX"] = "bolla"
+                            self.bool_pipeline_ex = True
+                            self.diz_hazards["ID"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_id = True
+                        elif self.bool_pipeline_wb:
+                            self.diz_hazards["MEM"] = "bolla"
+                            self.bool_pipeline_mem = True
+                            self.diz_hazards["EX"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_ex = True
+                    elif lista_valori_diz["Numero Data Hazards"] == 2:
+                        if self.bool_pipeline_if:
+                            self.ciclo_di_clock = 0 # ho finito la ricerca
+                        elif self.bool_pipeline_id:
+                            self.diz_hazards["IF"] = "bolla"
+                            self.bool_pipeline_if = True
+                        elif self.bool_pipeline_ex:
+                            self.diz_hazards["ID"] = "bolla"
+                            self.bool_pipeline_id = True
+                            self.diz_hazards["IF"] = "bolla"
+                            self.bool_pipeline_if = True
+                        elif self.bool_pipeline_mem:
+                            self.diz_hazards["EX"] = "bolla"
+                            self.bool_pipeline_ex = True
+                            self.diz_hazards["ID"] = "bolla"
+                            self.bool_pipeline_id = True
+                            self.diz_hazards["IF"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_if = True
+                        elif self.bool_pipeline_wb:
+                            self.diz_hazards["MEM"] = "bolla"
+                            self.bool_pipeline_mem = True
+                            self.diz_hazards["EX"] = "bolla"
+                            self.bool_pipeline_ex = True
+                            self.diz_hazards["ID"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_id = True
+                    else:
+                        if self.bool_pipeline_if:
+                            self.ciclo_di_clock = 0 # ho finito la ricerca
+                        elif self.bool_pipeline_id:
+                            self.diz_hazards["IF"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_if = True
+                        elif self.bool_pipeline_ex:
+                            self.diz_hazards["ID"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_id = True
+                        elif self.bool_pipeline_mem:
+                            self.diz_hazards["EX"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_ex = True
+                        elif self.bool_pipeline_wb:
+                            self.diz_hazards["MEM"] = "("+str(indice+1)+") "+riga
+                            self.bool_pipeline_mem = True              
+                                 
             return lista_valori_diz, totale_clocks, data_hazards_totali, control_hazards_totali
+        
         valore_tre = ""
         valore_due = ""
         valore_uno = ""
@@ -668,58 +834,74 @@ class Simulatore() :
                         self.insieme_data_hazards.add(tupla_hazard_secondo_registro)
         if not bool_forwarding:
             if stalli_primo_registro_not_forwarding >= stalli_secondo_registro_not_forwarding:
-                lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_not_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                # lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_not_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                lista_valori_diz["Rappresentazione Pipeline"] = data_hazards*(control_hazards+stalli_primo_registro_not_forwarding)+stringa_pipeline # rappresentazione pipeline
                 data_hazards_totali += stalli_primo_registro_not_forwarding
                 totale_clocks += stalli_primo_registro_not_forwarding+control_hazards
-                lista_valori_diz.append(stalli_primo_registro_not_forwarding) # data hazards per quella istruzione
-                lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
-                lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                # lista_valori_diz.append(stalli_primo_registro_not_forwarding) # data hazards per quella istruzione
+                # lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
+                # lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                lista_valori_diz["Numero Data Hazards"] = stalli_primo_registro_not_forwarding # data hazards per quella istruzione
+                lista_valori_diz["Numero Control Hazards"] = control_hazards # control hazards per quella istruzione
+                lista_valori_diz["Valore Clock"] = totale_clocks # Valore clock per quella istruzione
                 if tupla_hazard_primo_registro != "" and stalli_primo_registro_not_forwarding > 0:
-                    lista_valori_diz.append(tupla_hazard_primo_registro)
+                    # lista_valori_diz.append(tupla_hazard_primo_registro)
+                    lista_valori_diz["Hazard Trovato"] = tupla_hazard_primo_registro
                     nome_registro = tupla_hazard_primo_registro[2]
                     riga_registro = str(tupla_hazard_primo_registro[0])
                     riga_attuale = str(tupla_hazard_primo_registro[1])
                     if bool_messaggi_hazards: # Se i messaggi sono abilitati allora verranno inseriti nella soluzione
                         if bool_branch and not bool_decode:
-                            messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di memory quando l'istruzione in riga "+riga_attuale+" sarà in fase di execute."
+                            messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di memory l'istruzione in riga "+riga_attuale+" è già in fase di execute."
                         else:
                             if stalli_primo_registro_not_forwarding == 2:
-                                messaggio_data_hazards = "Ci sono due data hazards perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di execute quando l'istruzione in riga "+riga_attuale+" sarà in fase di decode."
+                                messaggio_data_hazards = "Ci sono due data hazards perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di execute l'istruzione in riga "+riga_attuale+" è già in fase di decode." 
                             else:
-                                messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione eseguita precedentemente in riga "+riga_registro+". L'istruzione è in fase di execute e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di memory quando l'istruzione in riga "+riga_attuale+" sarà in fase di decode."
-                        lista_valori_diz.append(messaggio_data_hazards)
-                        
+                                messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione eseguita precedentemente in riga "+riga_registro+". L'istruzione è in fase di execute e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di memory l'istruzione in riga "+riga_attuale+" è già in fase di decode."
+                        # lista_valori_diz.append(messaggio_data_hazards)
+                        lista_valori_diz["Messaggio"] = messaggio_data_hazards           
             else:
-                lista_valori_diz.append(data_hazards*(control_hazards+stalli_secondo_registro_not_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                # lista_valori_diz.append(data_hazards*(control_hazards+stalli_secondo_registro_not_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                lista_valori_diz["Rappresentazione Pipeline"] = data_hazards*(control_hazards+stalli_secondo_registro_not_forwarding)+stringa_pipeline # rappresentazione pipeline
                 data_hazards_totali += stalli_secondo_registro_not_forwarding
                 totale_clocks += stalli_secondo_registro_not_forwarding+control_hazards
-                lista_valori_diz.append(stalli_secondo_registro_not_forwarding) # data hazards per quella istruzione
-                lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
-                lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                # lista_valori_diz.append(stalli_secondo_registro_not_forwarding) # data hazards per quella istruzione
+                # lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
+                # lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                lista_valori_diz["Numero Data Hazards"] = stalli_secondo_registro_not_forwarding # data hazards per quella istruzione
+                lista_valori_diz["Numero Control Hazards"] = control_hazards # control hazards per quella istruzione
+                lista_valori_diz["Valore Clock"] = totale_clocks # Valore clock per quella istruzione
                 if tupla_hazard_secondo_registro != "" and stalli_secondo_registro_not_forwarding > 0:
-                    lista_valori_diz.append(tupla_hazard_secondo_registro)
+                    # lista_valori_diz.append(tupla_hazard_secondo_registro)
+                    lista_valori_diz["Hazard Trovato"] = tupla_hazard_secondo_registro
                     nome_registro = tupla_hazard_secondo_registro[2]
                     riga_registro = str(tupla_hazard_secondo_registro[0])
                     riga_attuale = str(tupla_hazard_secondo_registro[1])
                     if bool_messaggi_hazards: # Se i messaggi sono abilitati allora verranno inseriti nella soluzione
                         if bool_branch and not bool_decode:
-                            messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di memory quando l'istruzione in riga "+riga_attuale+" sarà in fase di execute."
+                            messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di memory l'istruzione in riga "+riga_attuale+" è già in fase di execute."
                         else:
                             if stalli_secondo_registro_not_forwarding == 2:
-                                messaggio_data_hazards = "Ci sono due data hazards perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di execute quando l'istruzione in riga "+riga_attuale+" sarà in fase di decode."
+                                messaggio_data_hazards = "Ci sono due data hazards perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di execute l'istruzione in riga "+riga_attuale+" è già in fase di decode."
                             else:
-                                messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione eseguita precedentemente in riga "+riga_registro+". L'istruzione è in fase di execute e deve raggiungere la fase di write back ma raggiungerebbe soltanto la fase di memory quando l'istruzione in riga "+riga_attuale+" sarà in fase di decode."
-                        lista_valori_diz.append(messaggio_data_hazards)
+                                messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione eseguita precedentemente in riga "+riga_registro+". L'istruzione è in fase di execute e deve raggiungere la fase di write back per poter passare il nuovo valore del registro, ma raggiunta la fase di memory l'istruzione in riga "+riga_attuale+" è già in fase di decode."
+                        # lista_valori_diz.append(messaggio_data_hazards)
+                        lista_valori_diz["Messaggio"] = messaggio_data_hazards
         else:    
             if stalli_primo_registro_forwarding >= stalli_secondo_registro_forwarding:
-                lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                # lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_forwarding)+stringa_pipeline) # rappresentazione pipeline
+                lista_valori_diz["Rappresentazione Pipeline"] = data_hazards*(control_hazards+stalli_primo_registro_forwarding)+stringa_pipeline # rappresentazione pipeline
                 data_hazards_totali += stalli_primo_registro_forwarding
                 totale_clocks += stalli_primo_registro_forwarding+control_hazards
-                lista_valori_diz.append(stalli_primo_registro_forwarding) # data hazards per quella istruzione
-                lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
-                lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                # lista_valori_diz.append(stalli_primo_registro_forwarding) # data hazards per quella istruzione
+                # lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
+                # lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                lista_valori_diz["Numero Data Hazards"] = stalli_primo_registro_forwarding # data hazards per quella istruzione
+                lista_valori_diz["Numero Control Hazards"] = control_hazards # control hazards per quella istruzione
+                lista_valori_diz["Valore Clock"] = totale_clocks # Valore clock per quella istruzione
                 if tupla_hazard_primo_registro != "" and stalli_primo_registro_forwarding > 0:
-                    lista_valori_diz.append(tupla_hazard_primo_registro)
+                    # lista_valori_diz.append(tupla_hazard_primo_registro)
+                    lista_valori_diz["Hazard Trovato"] = tupla_hazard_primo_registro
                     nome_registro = tupla_hazard_primo_registro[2]
                     riga_registro = str(tupla_hazard_primo_registro[0])
                     riga_attuale = str(tupla_hazard_primo_registro[1])
@@ -734,16 +916,22 @@ class Simulatore() :
                                 messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di memory per poter passare il nuovo valore del registro, ma una volta raggiunta questa fase l'istruzione in riga "+riga_attuale+" è gia in fase di execute."       
                         else: # Caso particolare per le altre istruzioni, si ha uno stallo solo con branch eseguite a fase di decode
                             messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di execute per poter passare il nuovo valore del registro, ma una volta raggiunta questa fase l'istruzione in riga "+riga_attuale+" è gia in fase di decode."       
-                        lista_valori_diz.append(messaggio_data_hazards)
+                        # lista_valori_diz.append(messaggio_data_hazards)
+                        lista_valori_diz["Messaggio"] = messaggio_data_hazards
             else:
-                lista_valori_diz.append(data_hazards*(control_hazards+stalli_secondo_registro_forwarding)+stringa_pipeline) # rappresentazione pipeline 
+                # lista_valori_diz.append(data_hazards*(control_hazards+stalli_secondo_registro_forwarding)+stringa_pipeline) # rappresentazione pipeline 
+                lista_valori_diz["Rappresentazione Pipeline"] = data_hazards*(control_hazards+stalli_secondo_registro_forwarding)+stringa_pipeline # rappresentazione pipeline 
                 data_hazards_totali += stalli_secondo_registro_forwarding
                 totale_clocks += stalli_secondo_registro_forwarding+control_hazards
-                lista_valori_diz.append(stalli_secondo_registro_forwarding) # data hazards per quella istruzione
-                lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
-                lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                # lista_valori_diz.append(stalli_secondo_registro_forwarding) # data hazards per quella istruzione
+                # lista_valori_diz.append(control_hazards) # control hazards per quella istruzione
+                # lista_valori_diz.append(totale_clocks) # Valore clock per quella istruzione
+                lista_valori_diz["Numero Data Hazards"] = stalli_secondo_registro_forwarding # data hazards per quella istruzione
+                lista_valori_diz["Numero Control Hazards"] = control_hazards # control hazards per quella istruzione
+                lista_valori_diz["Valore Clock"] = totale_clocks # Valore clock per quella istruzione
                 if tupla_hazard_secondo_registro != "" and stalli_secondo_registro_forwarding > 0:
-                    lista_valori_diz.append(tupla_hazard_secondo_registro)
+                    # lista_valori_diz.append(tupla_hazard_secondo_registro)
+                    lista_valori_diz["Hazard Trovato"] = tupla_hazard_secondo_registro
                     nome_registro = tupla_hazard_secondo_registro[2]
                     riga_registro = str(tupla_hazard_secondo_registro[0])
                     riga_attuale = str(tupla_hazard_secondo_registro[1])
@@ -758,7 +946,8 @@ class Simulatore() :
                                 messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di memory per poter passare il nuovo valore del registro, ma una volta raggiunta questa fase l'istruzione in riga "+riga_attuale+" è gia in fase di execute."       
                         else: # Caso particolare per le altre istruzioni, si ha uno stallo solo con branch eseguite a fase di decode
                             messaggio_data_hazards = "C'è un data hazard perchè il registro "+nome_registro+" ha cambiato valore nell'istruzione precedente in riga "+riga_registro+". L'istruzione è in fase di decode e deve raggiungere la fase di execute per poter passare il nuovo valore del registro, ma una volta raggiunta questa fase l'istruzione in riga "+riga_attuale+" è gia in fase di decode."       
-                        lista_valori_diz.append(messaggio_data_hazards)
+                        # lista_valori_diz.append(messaggio_data_hazards)
+                        lista_valori_diz["Messaggio"] = messaggio_data_hazards
         for reg in self.insieme_registri:
             if not bool_forwarding:
                 if stalli_primo_registro_not_forwarding >= stalli_secondo_registro_not_forwarding and stalli_primo_registro_not_forwarding > 0:
@@ -789,6 +978,90 @@ class Simulatore() :
                 registro_principale.riga_precedente = registro_principale.riga_registro
             registro_principale.istruzione_mips = lista_indice[0] 
             registro_principale.riga_registro = indice+1
+            
+         # Analizzo le istruzioni nella pipeline durante un determinato ciclo di clock
+        if self.ciclo_di_clock != 0: # Non vengono risolti i casi con clock minore di 5
+            if totale_clocks >= self.ciclo_di_clock and not self.bool_clock_trovato:
+                if self.ciclo_di_clock == totale_clocks: # caso standard
+                    self.bool_clock_trovato = True
+                    self.diz_hazards["WB"] = "("+str(indice+1)+") "+riga
+                    self.bool_pipeline_wb = True
+                elif self.ciclo_di_clock == totale_clocks - 1:
+                    self.bool_clock_trovato = True
+                    self.diz_hazards["WB"] = "bolla"
+                    self.bool_pipeline_wb = True
+                    self.diz_hazards["MEM"] = "("+str(indice+1)+") "+riga
+                    self.bool_pipeline_mem = True
+                elif self.ciclo_di_clock == totale_clocks - 2:
+                    self.bool_clock_trovato = True
+                    self.diz_hazards["WB"] = "bolla"
+                    self.bool_pipeline_wb = True
+                    self.diz_hazards["MEM"] = "bolla"
+                    self.bool_pipeline_mem = True
+                    self.diz_hazards["EX"] = "("+str(indice+1)+") "+riga
+                    self.bool_pipeline_ex = True
+            elif self.bool_clock_trovato:
+                if lista_valori_diz["Numero Control Hazards"] == 1 or lista_valori_diz["Numero Data Hazards"] == 1:
+                    if self.bool_pipeline_if:
+                        self.ciclo_di_clock = 0 # ho finito la ricerca
+                    elif self.bool_pipeline_id:
+                        self.diz_hazards["IF"] = "bolla"
+                        self.bool_pipeline_if = True
+                    elif self.bool_pipeline_ex:
+                        self.diz_hazards["ID"] = "bolla"
+                        self.bool_pipeline_id = True
+                        self.diz_hazards["IF"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_if = True
+                    elif self.bool_pipeline_mem:
+                        self.diz_hazards["EX"] = "bolla"
+                        self.bool_pipeline_ex = True
+                        self.diz_hazards["ID"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_id = True
+                    elif self.bool_pipeline_wb:
+                        self.diz_hazards["MEM"] = "bolla"
+                        self.bool_pipeline_mem = True
+                        self.diz_hazards["EX"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_ex = True
+                elif lista_valori_diz["Numero Data Hazards"] == 2:
+                    if self.bool_pipeline_if:
+                        self.ciclo_di_clock = 0 # ho finito la ricerca
+                    elif self.bool_pipeline_id:
+                        self.diz_hazards["IF"] = "bolla"
+                        self.bool_pipeline_if = True
+                    elif self.bool_pipeline_ex:
+                        self.diz_hazards["ID"] = "bolla"
+                        self.bool_pipeline_id = True
+                        self.diz_hazards["IF"] = "bolla"
+                        self.bool_pipeline_if = True
+                    elif self.bool_pipeline_mem:
+                        self.diz_hazards["EX"] = "bolla"
+                        self.bool_pipeline_ex = True
+                        self.diz_hazards["ID"] = "bolla"
+                        self.bool_pipeline_id = True
+                        self.diz_hazards["IF"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_if = True
+                    elif self.bool_pipeline_wb:
+                        self.diz_hazards["MEM"] = "bolla"
+                        self.bool_pipeline_mem = True
+                        self.diz_hazards["EX"] = "bolla"
+                        self.bool_pipeline_ex = True
+                        self.diz_hazards["ID"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_id = True
+                else:
+                    if self.bool_pipeline_if:
+                        self.ciclo_di_clock = 0 # ho finito la ricerca
+                    elif self.bool_pipeline_id:
+                        self.diz_hazards["IF"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_if = True
+                    elif self.bool_pipeline_ex:
+                        self.diz_hazards["ID"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_id = True
+                    elif self.bool_pipeline_mem:
+                        self.diz_hazards["EX"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_ex = True
+                    elif self.bool_pipeline_wb:
+                        self.diz_hazards["MEM"] = "("+str(indice+1)+") "+riga
+                        self.bool_pipeline_mem = True
         
         return lista_valori_diz, totale_clocks, data_hazards_totali, control_hazards_totali   
     
@@ -873,12 +1146,18 @@ class Simulatore() :
     # Otteniamo cosi un dizionario con tutti i dati.
     # ( Il program counter viene aggiornato per ogni istruzione trovata)
      
-    def simula_codice_mips(self,bool_decode: bool, bool_forwarding: bool, bool_program_counter: bool, bool_messaggi_hazards: bool):
+    def simula_codice_mips(self,bool_decode: bool, bool_forwarding: bool, bool_program_counter: bool, bool_messaggi_hazards: bool, ciclo_di_clock: int):
         Simulatore.modifica_testo(self)
-        print(self.testo_modificato)
+        # print(self.testo_modificato)
         self.istruzioni.bool_program_counter = bool_program_counter
+        self.bool_forwarding = bool_forwarding
+        self.ciclo_di_clock = ciclo_di_clock
         Simulatore.trova_indirizzi_text_e_salti(self, bool_decode)
-        diz_risultato = {}
+        diz_pipeline = {}
+        diz_hazards = {}
+        if ciclo_di_clock != 0:
+            diz_hazards = {"IF": "Nessuna istruzione", "ID": "Nessuna istruzione", "EX": "Nessuna istruzione", "MEM": "Nessuna istruzione", "WB": "Nessuna istruzione"}
+        self.diz_hazards = diz_hazards
         chiave_diz_ris = 1
         indice = 0
         punto = '.'
@@ -1140,11 +1419,38 @@ class Simulatore() :
                             totale_clocks += 1
                             pc.intero += 4
                             program_counter = pc.intero
-                            diz_risultato[chiave_diz_ris] = [indice+1,program_counter,valore,stringa_pipeline_syscall,0,control_hazards,totale_clocks]
+                            # Analizzo le istruzioni nella pipeline durante un determinato ciclo di clock
+                            if self.ciclo_di_clock != 0: # Non vengono risolti i casi con clock minore di 5
+                                if totale_clocks == self.ciclo_di_clock and not self.bool_clock_trovato:
+                                    self.bool_clock_trovato = True
+                                    self.diz_hazards["WB"] = "("+str(indice+1)+") "+syscall
+                                    self.bool_pipeline_wb = True
+                                elif self.bool_clock_trovato:
+                                    if self.bool_pipeline_if:
+                                        self.ciclo_di_clock = 0 # ho finito la ricerca
+                                    elif self.bool_pipeline_id:
+                                        self.diz_hazards["IF"] = "("+str(indice+1)+") "+syscall
+                                        self.bool_pipeline_if = True
+                                    elif self.bool_pipeline_ex:
+                                        self.diz_hazards["ID"] = "("+str(indice+1)+") "+syscall
+                                        self.bool_pipeline_id = True
+                                    elif self.bool_pipeline_mem:
+                                        self.diz_hazards["EX"] = "("+str(indice+1)+") "+syscall
+                                        self.bool_pipeline_ex = True
+                                    elif self.bool_pipeline_wb:
+                                        self.diz_hazards["MEM"] = "("+str(indice+1)+") "+syscall
+                                        self.bool_pipeline_mem = True
+                            # diz_pipeline[chiave_diz_ris] = [indice+1,program_counter,valore,stringa_pipeline_syscall,0,control_hazards,totale_clocks]
+                            diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": program_counter, "Istruzione Mips": valore, "Rappresentazione Pipeline": stringa_pipeline_syscall, "Numero Data Hazards": 0, "Numero Control Hazards": control_hazards, "Valore Clock": totale_clocks, "Hazard Trovato": [] }
+                            if bool_messaggi_hazards:
+                                diz_pipeline[chiave_diz_ris]["Messaggio"] = ""
                             indice_riga_pre_precedente = indice_riga_precedente
                             indice_riga_precedente = indice
                         else:
-                            diz_risultato[chiave_diz_ris] = [indice+1,valore] # riga come Q: (nessuna riga di codice)
+                            # diz_pipeline[chiave_diz_ris] = [indice+1,valore] # riga come Q: (nessuna riga di codice)
+                            diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": 0, "Istruzione Mips": valore, "Rappresentazione Pipeline": "Nessuna istruzione in questa riga", "Numero Data Hazards": 0, "Numero Control Hazards": 0, "Valore Clock": 0, "Hazard Trovato": [] } # riga come Q: (nessuna riga di codice)
+                            if bool_messaggi_hazards:
+                                diz_pipeline[chiave_diz_ris]["Messaggio"] = ""
                         chiave_diz_ris += 1
                     else:
                         if self.testo_modificato[indice][1] not in self.insieme_istruzioni:
@@ -1152,11 +1458,38 @@ class Simulatore() :
                                 totale_clocks += 1
                                 pc.intero += 4
                                 program_counter = pc.intero
-                                diz_risultato[chiave_diz_ris] = [indice+1,program_counter,valore,stringa_pipeline_syscall,0,control_hazards,totale_clocks]
+                                # Analizzo le istruzioni nella pipeline durante un determinato ciclo di clock
+                                if self.ciclo_di_clock != 0: # Non vengono risolti i casi con clock minore di 5
+                                    if totale_clocks == self.ciclo_di_clock and not self.bool_clock_trovato:
+                                        self.bool_clock_trovato = True
+                                        self.diz_hazards["WB"] = "("+str(indice+1)+") "+syscall
+                                        self.bool_pipeline_wb = True
+                                    elif self.bool_clock_trovato:
+                                        if self.bool_pipeline_if:
+                                            self.ciclo_di_clock = 0 # ho finito la ricerca
+                                        elif self.bool_pipeline_id:
+                                            self.diz_hazards["IF"] = "("+str(indice+1)+") "+syscall
+                                            self.bool_pipeline_if = True
+                                        elif self.bool_pipeline_ex:
+                                            self.diz_hazards["ID"] = "("+str(indice+1)+") "+syscall
+                                            self.bool_pipeline_id = True
+                                        elif self.bool_pipeline_mem:
+                                            self.diz_hazards["EX"] = "("+str(indice+1)+") "+syscall
+                                            self.bool_pipeline_ex = True
+                                        elif self.bool_pipeline_wb:
+                                            self.diz_hazards["MEM"] = "("+str(indice+1)+") "+syscall
+                                            self.bool_pipeline_mem = True
+                                # diz_pipeline[chiave_diz_ris] = [indice+1,program_counter,valore,stringa_pipeline_syscall,0,control_hazards,totale_clocks]
+                                diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": program_counter, "Istruzione Mips": valore, "Rappresentazione Pipeline": stringa_pipeline_syscall, "Numero Data Hazards": 0, "Numero Control Hazards": control_hazards, "Valore Clock": totale_clocks, "Hazard Trovato": [] }
+                                if bool_messaggi_hazards:
+                                    diz_pipeline[chiave_diz_ris]["Messaggio"] = ""
                                 indice_riga_pre_precedente = indice_riga_precedente
                                 indice_riga_precedente = indice
                             else:
-                                diz_risultato[chiave_diz_ris] = [indice+1,valore] # riga come Q: (nessuna riga di codice)
+                                # diz_pipeline[chiave_diz_ris] = [indice+1,valore] # riga come Q: (nessuna riga di codice)
+                                diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": 0, "Istruzione Mips": valore, "Rappresentazione Pipeline": "Nessuna istruzione in questa riga", "Numero Data Hazards": 0, "Numero Control Hazards": 0, "Valore Clock": 0, "Hazard Trovato": [] } # riga come Q: (nessuna riga di codice)
+                                if bool_messaggi_hazards:
+                                    diz_pipeline[chiave_diz_ris]["Messaggio"] = ""
                             chiave_diz_ris += 1
                     indice_secondario += 1 
                     continue
@@ -1396,17 +1729,19 @@ class Simulatore() :
                     # Qua trova_valori_pipeline
                     risultato_per_pipeline = Simulatore.trova_valori_per_pipeline(self,istruzione_precedente,indice_riga_precedente,indice_riga_pre_precedente,program_counter,totale_clocks,nome_registro,indice,self.testo_modificato[indice],
                                                                                 bool_salto,bool_saltato,data_hazards_totali,control_hazards_totali,control_hazards,bool_decode,bool_forwarding,bool_messaggi_hazards,bool_analizza_con_esecuzione)
-                    diz_risultato[chiave_diz_ris] = risultato_per_pipeline[0]
+                    diz_pipeline[chiave_diz_ris] = risultato_per_pipeline[0]
                     totale_clocks = risultato_per_pipeline[1]
                     data_hazards_totali = risultato_per_pipeline[2]
                     control_hazards_totali = risultato_per_pipeline[3]
                     if tupla_control_hazards != "":
-                        diz_risultato[chiave_diz_ris].append(tupla_control_hazards)
+                        # diz_risultato[chiave_diz_ris].append(tupla_control_hazards)
+                        diz_pipeline[chiave_diz_ris]["Hazard Trovato"] = tupla_control_hazards
                         riga_branch = str(tupla_control_hazards[0])
                         tupla_control_hazards = ""
                         if bool_messaggi_hazards:
                             messaggio_hazards = messaggio_hazard_inizio+istruzione_precedente+"' a riga "+riga_branch+" è soddisfatta"
-                            diz_risultato[chiave_diz_ris].append(messaggio_hazards)
+                            # diz_risultato[chiave_diz_ris].append(messaggio_hazards)
+                            diz_pipeline[chiave_diz_ris]["Messaggio"] = messaggio_hazards
                     chiave_diz_ris += 1
                     if bool_salto:
                         bool_saltato = True
@@ -1458,26 +1793,48 @@ class Simulatore() :
         #print(diz_dati)
         #print(diz_indirizzi)
         #print(diz_indirizzi_text)
-        diz_risultato["data hazards totali"] = data_hazards_totali
-        diz_risultato["control hazards totali"] = control_hazards_totali
-        diz_risultato["clocks"] = totale_clocks
+        diz_hazards["Data Hazards Totali"] = data_hazards_totali
+        diz_hazards["Control Hazards Totali"] = control_hazards_totali
+        diz_hazards["Cicli di Clock"] = totale_clocks
+        if ciclo_di_clock > totale_clocks:
+            diz_hazards["IF"] = "Nessuna istruzione trovata perchè l'esecuzione del codice è terminata. Inserire un ciclo di clock più piccolo"
+            diz_hazards["ID"] = "Nessuna istruzione trovata perchè l'esecuzione del codice è terminata. Inserire un ciclo di clock più piccolo"
+            diz_hazards["EX"] = "Nessuna istruzione trovata perchè l'esecuzione del codice è terminata. Inserire un ciclo di clock più piccolo"
+            diz_hazards["MEM"] = "Nessuna istruzione trovata perchè l'esecuzione del codice è terminata. Inserire un ciclo di clock più piccolo"
+            diz_hazards["WB"] = "Nessuna istruzione trovata perchè l'esecuzione del codice è terminata. Inserire un ciclo di clock più piccolo"
         lista_data_hazards = list(self.insieme_data_hazards)
         lista_data_hazards.sort()
         lista_control_hazards = list(self.insieme_control_hazards)
         lista_control_hazards.sort()
-        diz_risultato["data hazards trovati"] = lista_data_hazards
-        diz_risultato["control hazards trovati"] = lista_control_hazards 
+        if len(lista_control_hazards) > len(lista_data_hazards):
+            differenza = len(lista_control_hazards) - len(lista_data_hazards)
+            for _ in range(0,differenza):
+                lista_data_hazards.append([])
+        elif len(lista_data_hazards) > len(lista_control_hazards):
+            differenza = len(lista_data_hazards) - len(lista_control_hazards)
+            for _ in range(0,differenza):
+                lista_control_hazards.append([])
+        diz_hazards["Data Hazards Trovati"] = lista_data_hazards
+        diz_hazards["Control Hazards Trovati"] = lista_control_hazards 
         for reg in self.insieme_registri:
             if reg.nome == "$t1":
                 print("qua")
                 print(reg.intero)
                 break
+        # rimuovo il program counter se il program counter è disabilitato
+        # infatti il program counter calcolato è errato  perchè non calcola le pseudoistruzioni in questo caso
+        # Il codice funziona sempre tranne se si usano istruzioni che lo necessitano ( per esempio jal, jalr)
+        # In quel caso il program counter deve essere corretto e quindi per ogni istruzione il calcolo delle pseudoistruzioni generate deve essere corretto
+        # Ogni istruzione nuova aggiunta dovrebbe avere questi calcoli ( altrimenti è bene non fare uso di jal e jalr e disattivare il program counter)
+        if not bool_program_counter: 
+            for diz in diz_pipeline:
+                del diz_pipeline[diz]["Program Counter"]
         #print(pc.intero)
         #print(diz_text)
         #print(self.testo_modificato)
         #print(lista_data_hazards)
         
-        return diz_risultato # Bisogna ritornare la soluzione pipeline
+        return diz_pipeline, diz_hazards # Bisogna ritornare la soluzione pipeline
 
 #print(forwarding)
 #print(x.testo_modificato)
