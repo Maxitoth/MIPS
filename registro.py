@@ -20,7 +20,7 @@ class Registro:
         self.istruzione_precedente = "" 
         
         
-    def vai_a_writeback(self): # Non utilizzato
+    def vai_a_writeback(self):
         self.fetch = False
         self.decode = False
         self.execute = False
