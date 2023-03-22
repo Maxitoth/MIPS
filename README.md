@@ -1,19 +1,22 @@
 # MIPS
 
 Viene simulato il codice mips inserito nel file di testo testo.txt. Questo per ottenere dati relativi alla pipeline.
-Il codice deve essere stato testato su Mars ( compilato ed eseguito). Deve risultare senza errori.
+Il codice deve essere stato testato su Mars ( compilato ed eseguito). Deve risultare senza errori. 
 
-sul file main.py é presente un oggetto Simulatore e sotto viene compilato un json file con tutti i dati.
+Sul file esegui_simulatore.py è presente la funzione main e i valori in input inoltre vengono compilati due json file con tutti i dati.
+Il programma si deve avviare tramite shell e ci sono vari valori in input che si possono inserire in riga di comando anche se tutti hanno un valore di default.
+L'unico input che deve essere inserito è il testo ( va inserito il path del testo in cui è presente il codice MIPS).
 
-Si può scegliere se eseguire di fare la simulazione con forwarding o meno, con le istruzioni branch a fase di decode o execute e se simulare il program counter.
-Inoltre si possono abilitare dei messaggi per ogni hazard trovato.
-(booleani true,false in simula_codice_mips del simulatore da cambiare nell'oggetto simulatore nel file main.py)
+Si può scegliere se eseguire di fare la simulazione con forwarding o meno, con le istruzioni branch a fase di decode o execute , se simulare il program counter 
+e se visualizzare quali istruzioni sono nella pipeline a un certo ciclo di clock.
+Inoltre si possono abilitare dei messaggi per ogni hazard trovato e creare due file excel per visualizzare i risultati ottenuti.
+(valori in input a riga di comando, usare esegui_simulatore.py -h per vedere i vari input e come scriverli)
+Vengono anche mostrati i cicli di clock totali e i cicli di clock presenti in ogni ciclo loop di codice trovato. ( Funziona bene con un unico ciclo e dovrebbe funzionare anche con piu cicli loop in sequenza o cicli dentro a cicli, ma non posso garantire che sia sempre corretto per programmi grandi o con molti cicli loop in questo caso)
 
 Il simulatore ha i suoi limiti. Questi sono scritti in vari commenti all'inizio del file simulatore.py.
+Sono anche presenti altri commenti su istruzioni_mips.py su come devono essere scritte nuove istruzioni dopo il metodo incrementa_program_counter della classe Istruzioni.
 
-I dati di tipo .byte, .half, .word, .ascii, .asciiz sono gestiti. L'unico carattere da non utilizzare è 'µ' ( usato nell'analisi dei dati .ascii e .asciiz)
-
-Come scritto nel file simulatore.py non tutte le istruzioni mips sono simulabili.
+I dati di tipo .byte, .half, .word, .ascii, .asciiz sono gestiti. L'unico carattere da non utilizzare è 'µ' ( usato nell'analisi dei dati .ascii e .asciiz) e la stringa vuota va usata da sola se si usano .ascii o .asciiz ( note su simulatore.py nei commenti)
 
 Le pseudoistruzioni non vengono incluse o aggiunte nel testo. Quindi se si esegue un salto ad un indirizzo di una pseudoistruzione ( possibile tramite istruzione jalr ) ci sarà sicuramente un errore durante la simulazione del codice mips. 
 
@@ -39,7 +42,7 @@ In istruzioni_mips.py:
   1) Aggiungere un metodo chiamandolo come l'istruzione mips da simulare.
   2) Il metodo deve sempre cominciare con Istruzioni.incrementa_program_counter(self) 
   3) A seconda del tipo di istruzione prendere come riferimento istruzioni già implementate a meno che sia un nuovo tipo di istruzione.
-  4) Esempio su come iniziare: Se ho beq $t1, $t2, Cycl il metodo é di questo tipo: beq(registro_uno_o_intero_uno,registro_due_o_intero_due, stringa). Implemento i       vari controlli ( se ho un registro o un intero) e controllo se registro_uno_o_intero_uno == registro_due_o_intero_due. Siccome si tratta di un istruzione di salto     devo restituire un booleano (salto) a True o False oltre alla stringa. Per istruzioni non di salto il ragionamento è lo stesso solo che aggiorno l'intero del           registro (chiamato di solito registro_destinazione) e restituisco una stringa ( non serve farlo)
+  4) Esempio su come iniziare: Se ho beq $t1, $t2, Cycl il metodo é di questo tipo: beq(self, registro_uno_o_intero_uno, registro_due_o_intero_due, stringa).     Implemento i vari controlli ( se ho un registro o un intero) e controllo se registro_uno_o_intero_uno == registro_due_o_intero_due. Siccome si tratta di un istruzione di salto devo restituire un booleano (salto) a True o False oltre alla stringa. Per istruzioni non di salto il ragionamento è lo stesso solo che aggiorno l'intero del   registro (chiamato di solito registro_destinazione) e restituisco una stringa ( non serve farlo)
   5) Se un istruzione può essere scritta in piu modi si usa una tupla ( tupla_valori). Bisogna prendere i valori dalla tupla ma il ragionamento è lo stesso.
-  6) Se l'istruzione permette salti nel testo senza uso di labels ma registri ( la jalr per esempio) bisognerà restituire un intero ( la stringa non é presente           nell'istruzione in questione e servirà l'implementazione del program counter)
+  6) Se l'istruzione permette salti nel testo senza uso di labels ma registri ( la jalr per esempio) bisognerà restituire un intero ( la stringa non è presente           nell'istruzione in questione e servirà l'implementazione del program counter)
  
