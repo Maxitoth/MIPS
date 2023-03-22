@@ -10,7 +10,7 @@ L'unico input che deve essere inserito è il testo ( va inserito il path del tes
 Si può scegliere se eseguire di fare la simulazione con forwarding o meno, con le istruzioni branch a fase di decode o execute , se simulare il program counter 
 e se visualizzare quali istruzioni sono nella pipeline a un certo ciclo di clock.
 Inoltre si possono abilitare dei messaggi per ogni hazard trovato e creare due file excel per visualizzare i risultati ottenuti.
-(valori in input a riga di comando, usare esegui_simulatore.py -h per vedere i vari input e come scriverli)
+(valori in input a riga di comando, usare python esegui_simulatore.py -h per vedere i vari input e come scriverli)
 Vengono anche mostrati i cicli di clock totali e i cicli di clock presenti in ogni ciclo loop di codice trovato. ( Funziona bene con un unico ciclo e dovrebbe funzionare anche con piu cicli loop in sequenza o cicli dentro a cicli, ma non posso garantire che sia sempre corretto per programmi grandi o con molti cicli loop in questo caso)
 
 Il simulatore ha i suoi limiti. Questi sono scritti in vari commenti all'inizio del file simulatore.py.
