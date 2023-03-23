@@ -14,7 +14,8 @@
 # puo essere letto correttamente
 
 # In ogni riga del testo con parti di codice ( istruzioni, .text, .data, strutture dati...) non ci devono essere commenti 
-# é possibile commentare in righe senza codice
+# é possibile commentare in righe senza codice ( il commento deve essere del tipo # piu uno spazio (esempio): # Risultato e non #Risultato)
+# (Lasciare uno spazio tra # e il resto della riga)
 
 # Le strutture dati devono avere nomi diversi dalle istruzioni mips ( non posso dire addi: o jalr: o subi: ecc...) (le maiuscole vanno bene)
 
@@ -179,6 +180,8 @@ class Simulatore() :
         self.reset_calcolo_loop = False
         self.aggiorna_pre_loop = False
         self.istruzione_pre_precedente = ""
+        self.conta_control_hazards = 0
+        self.conta_data_hazards = 0
         
     # Il metodo si occupa di modificare il file di testo associato per ottenere una lista di liste (ogni lista é una riga del testo)
     # Il dizionario diz_righe viene aggiornato con numero riga e riga del testo associata.
@@ -748,6 +751,12 @@ class Simulatore() :
                             self.bool_pipeline_mem = True 
             
             self.conta_clocks += conta_clocks
+            if control_hazards == 0 and bool_analizza_con_esecuzione:
+                self.conta_data_hazards += numero_hazards
+            else:
+                if bool_analizza_con_esecuzione:
+                    self.conta_control_hazards += control_hazards 
+                
             for chiave in self.diz_loops:
                 if self.diz_loops[chiave][1] == True:
                     self.diz_loops[chiave][2] += conta_clocks
@@ -763,7 +772,11 @@ class Simulatore() :
                             bool_lista_trovata = True
                             break
                     if not bool_lista_trovata:
-                        self.diz_loops[self.valore_loop][3] += [lista_cercata]   
+                        lista_cercata.append(self.conta_data_hazards)
+                        lista_cercata.append(self.conta_control_hazards)
+                        self.diz_loops[self.valore_loop][3] += [lista_cercata] 
+                    self.conta_data_hazards = 0
+                    self.conta_control_hazards = 0 
                     self.conta_clocks = 1
                     self.diz_loops[self.valore_loop][2] = 1
                     self.diz_loops[self.valore_loop][4] = set()
@@ -1178,7 +1191,13 @@ class Simulatore() :
                     elif self.bool_pipeline_wb:
                         self.diz_hazards["MEM"] = "("+str(indice+1)+") "+riga
                         self.bool_pipeline_mem = True 
+                        
         self.conta_clocks += conta_clocks
+        if control_hazards == 0 and bool_analizza_con_esecuzione:
+            self.conta_data_hazards += numero_hazards
+        else:
+            if bool_analizza_con_esecuzione:
+                self.conta_control_hazards += control_hazards      
         for chiave in self.diz_loops:
             if self.diz_loops[chiave][1] == True:
                 self.diz_loops[chiave][2] += conta_clocks
@@ -1194,8 +1213,11 @@ class Simulatore() :
                         bool_lista_trovata = True
                         break
                 if not bool_lista_trovata:
+                    lista_cercata.append(self.conta_data_hazards)
+                    lista_cercata.append(self.conta_control_hazards)
                     self.diz_loops[self.valore_loop][3] += [lista_cercata] 
-
+                self.conta_data_hazards = 0
+                self.conta_control_hazards = 0
                 self.conta_clocks = 1
                 self.diz_loops[self.valore_loop][2] = 1
                 self.diz_loops[self.valore_loop][4] = set()
@@ -1286,7 +1308,7 @@ class Simulatore() :
     # In particolare ogni elemento della lista viene analizzato per capire se è un istruzione, un registro o un label.
     # Viene poi chiamata l'istruzione della classe Istruzioni corrispondente all'istruzione mips trovata.
     # E infine viene simulata la pipeline per quella specifica riga.
-    # Otteniamo cosi un dizionario con tutti i dati.
+    # Otteniamo cosi due dizionari con tutti i dati.
     # ( Il program counter viene aggiornato per ogni istruzione trovata)
      
     def simula_codice_mips(self, testo: str, bool_decode: bool, bool_forwarding: bool, bool_program_counter: bool, bool_messaggi_hazards: bool, ciclo_di_clock: int):
@@ -2020,8 +2042,11 @@ class Simulatore() :
                     risultato_per_pipeline = Simulatore.trova_valori_per_pipeline(self,istruzione_precedente,indice_riga_precedente,indice_riga_pre_precedente,program_counter,totale_clocks,nome_registro,indice,self.testo_modificato[indice],
                                                                                 bool_salto,bool_saltato,data_hazards_totali,control_hazards_totali,control_hazards,bool_decode,bool_forwarding,bool_messaggi_hazards,bool_analizza_con_esecuzione)
                     if self.reset_calcolo_loop: # reset loops
-                        if self.stringa_clocks_pre_loops+self.valore_loop not in diz_hazards and self.aggiorna_pre_loop:
-                            diz_hazards[self.stringa_clocks_pre_loops+self.valore_loop] = self.conta_clocks
+                        stringa_aggiornamento = "( "+str(self.conta_clocks - (self.conta_control_hazards+self.conta_data_hazards))+"(I) "+str(self.conta_data_hazards)+"(DH) "+str(self.conta_control_hazards)+"(CH) )"
+                        if self.stringa_clocks_pre_loops+self.valore_loop+stringa_aggiornamento not in diz_hazards and self.aggiorna_pre_loop:
+                            diz_hazards[self.stringa_clocks_pre_loops+self.valore_loop+stringa_aggiornamento] = self.conta_clocks
+                        self.conta_data_hazards = 0
+                        self.conta_control_hazards = 0
                         self.conta_clocks = 1
                         self.reset_calcolo_loop = False
                         self.aggiorna_pre_loop = False
@@ -2093,13 +2118,16 @@ class Simulatore() :
         for chiave in self.diz_loops:
             intero = 1
             for indice_lista in range(0,len(self.diz_loops[chiave][3])):
-                diz_hazards[chiave_loop+chiave+" ("+str(intero)+") "+"(x"+str(self.diz_loops[chiave][3][indice_lista][2])+")"] = self.diz_loops[chiave][3][indice_lista][0]
+                stringa_aggiornamento = "( "+str(self.diz_loops[chiave][3][indice_lista][0] - (self.diz_loops[chiave][3][indice_lista][3]+self.diz_loops[chiave][3][indice_lista][4]))+"(I) "+str(self.diz_loops[chiave][3][indice_lista][3])+"(DH) "+str(self.diz_loops[chiave][3][indice_lista][4])+"(CH) )"
+                diz_hazards[chiave_loop+chiave+" ("+str(intero)+") "+"(x"+str(self.diz_loops[chiave][3][indice_lista][2])+") "+stringa_aggiornamento] = self.diz_loops[chiave][3][indice_lista][0]
                 intero += 1
     
         if self.valore_loop == "(Nessun loop trovato)":
-            diz_hazards["Nessun loop trovato, cicli di click trovati"] = self.conta_clocks  
-        if self.conta_clocks != 0 and self.valore_loop != "(Nessun loop trovato)":       
-            diz_hazards["Cicli di clock dopo i possibili loop "] = self.conta_clocks
+            stringa_aggiornamento = "( "+str(self.conta_clocks - (self.conta_control_hazards+self.conta_data_hazards))+"(I) "+str(self.conta_data_hazards)+"(DH) "+str(self.conta_control_hazards)+"(CH) )"
+            diz_hazards["Nessun loop trovato, cicli di click trovati "+stringa_aggiornamento] = self.conta_clocks  
+        if self.conta_clocks != 0 and self.valore_loop != "(Nessun loop trovato)":  
+            stringa_aggiornamento = "( "+str(self.conta_clocks - (self.conta_control_hazards+self.conta_data_hazards))+"(I) "+str(self.conta_data_hazards)+"(DH) "+str(self.conta_control_hazards)+"(CH) )"     
+            diz_hazards["Cicli di clock dopo i possibili loop "+stringa_aggiornamento] = self.conta_clocks
         diz_hazards["Data Hazards Totali"] = data_hazards_totali
         diz_hazards["Control Hazards Totali"] = control_hazards_totali
         diz_hazards["Cicli di Clock"] = totale_clocks
