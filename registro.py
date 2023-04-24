@@ -26,7 +26,7 @@ class Registro:
         self.execute = False
         self.memory = False
         self.write_back = True
-        self.stato_write_back = 5
+        self.stato_fase = 5
         
     # Il metodo si occupa di cambiare lo stato del registro.   
         

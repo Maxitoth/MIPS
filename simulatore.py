@@ -94,7 +94,7 @@ def chiama_istruzioni_mips(oggetto_classe_istruzioni, nome_istruzione, prima_pos
 # Altrimenti possono essere generati due fogli per un file excel: uno per il risultato dell'esecuzione del codice mips
 # e uno per il risultato dei data hazards e control hazards possibili.
         
-def genera_excel(json_object_pipeline, json_object_hazards, bool_forwarding: bool, bool_excel_pipeline: bool, bool_excel_hazards: bool):
+def genera_excel(json_object_pipeline, json_object_hazards, json_object_clocks, bool_forwarding: bool, bool_excel_pipeline: bool, bool_excel_hazards: bool):
     if bool_forwarding:
         nome_excel = 'risultato_con_forwarding.xlsx'
     else:
@@ -116,6 +116,7 @@ def genera_excel(json_object_pipeline, json_object_hazards, bool_forwarding: boo
         
     if bool_excel_hazards:
         df_hazards = pd.read_json(json_object_hazards)
+        df_clocks = pd.read_json(json_object_clocks, lines = True)
         if not bool_excel_pipeline:
             writer_hazards = pd.ExcelWriter(nome_excel)
             df_hazards.to_excel(writer_hazards, sheet_name='Hazards', index=False, na_rep='NaN')
@@ -126,7 +127,13 @@ def genera_excel(json_object_pipeline, json_object_hazards, bool_forwarding: boo
             for column in df_hazards:
                 column_width = max(df_hazards[column].astype(str).map(len).max(), len(column))
                 col_idx = df_hazards.columns.get_loc(column)
-                writer_hazards.sheets['Hazards'].set_column(col_idx, col_idx, column_width)     
+                writer_hazards.sheets['Hazards'].set_column(col_idx, col_idx, column_width)
+                
+            df_clocks.to_excel(writer_hazards, sheet_name='Clocks', index=False, na_rep='NaN') 
+            for column in df_clocks:
+                column_width = max(df_clocks[column].astype(str).map(len).max(), len(column))
+                col_idx = df_clocks.columns.get_loc(column)
+                writer_hazards.sheets['Clocks'].set_column(col_idx, col_idx, column_width)    
             writer_hazards.close()
         else:
             df_hazards.to_excel(writer_pipeline, sheet_name='Hazards', index=False, na_rep='NaN')
@@ -137,7 +144,13 @@ def genera_excel(json_object_pipeline, json_object_hazards, bool_forwarding: boo
             for column in df_hazards:
                 column_width = max(df_hazards[column].astype(str).map(len).max(), len(column))
                 col_idx = df_hazards.columns.get_loc(column)
-                writer_pipeline.sheets['Hazards'].set_column(col_idx, col_idx, column_width)     
+                writer_pipeline.sheets['Hazards'].set_column(col_idx, col_idx, column_width)
+                 
+            df_clocks.to_excel(writer_pipeline, sheet_name='Clocks', index=False, na_rep='NaN') 
+            for column in df_clocks:
+                column_width = max(df_clocks[column].astype(str).map(len).max(), len(column))
+                col_idx = df_clocks.columns.get_loc(column)
+                writer_pipeline.sheets['Clocks'].set_column(col_idx, col_idx, column_width)    
             writer_pipeline.close()
         
 
@@ -539,8 +552,12 @@ class Simulatore() :
                                     self.insieme_data_hazards.add(tupla_hazard_primo_registro)
                         if primo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch):
                             if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_precedente:
-                                tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
-                                self.insieme_data_hazards.add(tupla_hazard_primo_registro)
+                                if tupla_hazard_primo_registro != "":
+                                    tupla_hazard_aggiuntiva = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
+                                    self.insieme_data_hazards.add(tupla_hazard_aggiuntiva)
+                                else:
+                                    tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
+                                    self.insieme_data_hazards.add(tupla_hazard_primo_registro)
                     for reg in self.insieme_registri:
                         if not bool_forwarding:
                             if stalli_primo_registro_not_forwarding > 0:
@@ -869,7 +886,7 @@ class Simulatore() :
                     # quindi questo - lo stato del registro ( stato dell'istruzione in cui faceva parte il registro l'ultima volta) ci dice quanti stalli ottengo. Se è una istruzione branch
                     # potrebbe essere execute o memory allineata con decode o fetch ( in sostanza più stalli).
                     istruzione_registro = primo_registro_da_controllare.istruzione_mips
-                    if  istruzione_registro in self.istruzioni_load and istruzione_registro != "la": # la si fa prima della memoria
+                    if istruzione_registro in self.istruzioni_load and istruzione_registro != "la": # la si fa prima della memoria
                         stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 1 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding  
                     else:
                         stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 2 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding
@@ -886,8 +903,12 @@ class Simulatore() :
                             self.insieme_data_hazards.add(tupla_hazard_primo_registro)
                 if primo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch) :
                     if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_precedente:
-                        tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
-                        self.insieme_data_hazards.add(tupla_hazard_primo_registro)
+                        if tupla_hazard_primo_registro != "":
+                            tupla_hazard_aggiuntiva = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
+                            self.insieme_data_hazards.add(tupla_hazard_aggiuntiva)
+                        else:
+                            tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
+                            self.insieme_data_hazards.add(tupla_hazard_primo_registro)
                         
                         
         if secondo_registro_da_controllare != "": # Potrebbe succedere che abbiamo add $s1, $zero, $s2
@@ -927,8 +948,12 @@ class Simulatore() :
                             self.insieme_data_hazards.add(tupla_hazard_secondo_registro)
                 if secondo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch) :
                     if indice_riga_pre_precedente+1 == secondo_registro_da_controllare.riga_precedente:
-                        tupla_hazard_secondo_registro = (secondo_registro_da_controllare.riga_precedente,indice+1,secondo_registro_da_controllare.nome)
-                        self.insieme_data_hazards.add(tupla_hazard_secondo_registro)
+                        if tupla_hazard_secondo_registro != "":
+                            tupla_hazard_aggiuntiva = (secondo_registro_da_controllare.riga_precedente,indice+1,secondo_registro_da_controllare.nome)
+                            self.insieme_data_hazards.add(tupla_hazard_aggiuntiva)
+                        else:
+                            tupla_hazard_secondo_registro = (secondo_registro_da_controllare.riga_precedente,indice+1,secondo_registro_da_controllare.nome)
+                            self.insieme_data_hazards.add(tupla_hazard_secondo_registro)
         if not bool_forwarding:
             if stalli_primo_registro_not_forwarding >= stalli_secondo_registro_not_forwarding:
                 # lista_valori_diz.append(data_hazards*(control_hazards+stalli_primo_registro_not_forwarding)+stringa_pipeline) # rappresentazione pipeline
@@ -1318,6 +1343,7 @@ class Simulatore() :
         self.istruzioni.bool_program_counter = bool_program_counter
         self.bool_forwarding = bool_forwarding
         self.ciclo_di_clock = ciclo_di_clock
+        # i reset dei registri at e ra avvengono nel seguente metodo (non serve farlo prima)
         Simulatore.trova_indirizzi_text_e_salti(self, bool_decode)
         diz_pipeline = {}
         diz_hazards = {}

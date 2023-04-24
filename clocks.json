@@ -1,0 +1,1 @@
+{"Cicli di clock prima del possibile loop cycl( 10(I) 8(DH) 0(CH) )": 18, "Cicli di clock nel loop cycl (1) (x2) ( 7(I) 5(DH) 1(CH) )": 13, "Cicli di clock nel loop cycl (2) (x4) ( 8(I) 5(DH) 0(CH) )": 13, "Cicli di clock dopo i possibili loop ( 12(I) 0(DH) 1(CH) )": 13, "Data Hazards Totali": 38, "Control Hazards Totali": 3, "Cicli di Clock": 109}
