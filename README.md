@@ -3,16 +3,16 @@
 Viene simulato il codice mips inserito nel file di testo testo.txt. Questo per ottenere dati relativi alla pipeline.
 Il codice deve essere stato testato su Mars ( compilato ed eseguito). Deve risultare senza errori. 
 
-Sul file esegui_simulatore.py è presente la funzione main e i valori in input inoltre vengono compilati due json file con tutti i dati.
+Sul file esegui_simulatore.py è presente la funzione main e i valori in input inoltre vengono compilati tre json file con tutti i dati.
 Il programma si deve avviare tramite shell e ci sono vari valori in input che si possono inserire in riga di comando anche se tutti hanno un valore di default.
 L'unico input che deve essere inserito è il testo ( va inserito il path del testo in cui è presente il codice MIPS).
 
 Si può scegliere se eseguire di fare la simulazione con forwarding o meno, con le istruzioni branch a fase di decode o execute , se simulare il program counter 
 e se visualizzare quali istruzioni sono nella pipeline a un certo ciclo di clock.
-Inoltre si possono abilitare dei messaggi per ogni hazard trovato e creare due file excel per visualizzare i risultati ottenuti( serve installare xlsxwriter con 
+Inoltre si possono abilitare dei messaggi per ogni hazard trovato e creare un file excel con fino a tre fogli per visualizzare i risultati ottenuti (serve installare xlsxwriter con 
 pip install xlsxwriter).
 (valori in input a riga di comando, usare python esegui_simulatore.py -h per vedere i vari input e come scriverli)
-Vengono anche mostrati i cicli di clock totali e i cicli di clock presenti in ogni ciclo loop di codice trovato. ( Funziona bene con un unico ciclo e dovrebbe funzionare anche con piu cicli loop in sequenza o cicli dentro a cicli, ma non posso garantire che sia sempre corretto per programmi grandi o con molti cicli loop in questo caso)
+Vengono anche mostrati i cicli di clock totali e i cicli di clock presenti in ogni ciclo loop di codice trovato. (Funziona bene con un unico ciclo e dovrebbe funzionare anche con più cicli loop in sequenza o cicli dentro a cicli, ma non posso garantire che sia sempre corretto per programmi grandi o con molti cicli loop in questo caso)
 
 Il simulatore ha i suoi limiti. Questi sono scritti in vari commenti all'inizio del file simulatore.py.
 Sono anche presenti altri commenti su istruzioni_mips.py su come devono essere scritte nuove istruzioni dopo il metodo incrementa_program_counter della classe Istruzioni.
