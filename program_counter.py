@@ -15,7 +15,7 @@ class Program_counter():
         self.indirizzo_text = 4194300
         self.diz_indirizzi_text = {}
     
-    insieme_istruzioni_semplici = {"lui", "srl", "sll", "slt", "j", "jal", "jalr", "move", "xor", "or", "and", "beqz"}
+    insieme_istruzioni_semplici = {"lui", "srl", "sll", "slt", "j", "jal", "jalr", "move", "xor", "or", "and", "beqz","bgez","bnez","bltz"}
     insieme_ori = {"ori", "xori", "andi"} # range identico 65535 a 0, nessun problema con chars 
     insieme_addi = {"addi", "addiu", "add"} # range identico 32767 a -32768, nessun problema con chars
     insieme_beq_subi = {"beq", "bne", "sub", "subi"} # range identico 32767 a -32768

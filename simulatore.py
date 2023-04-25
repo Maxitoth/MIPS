@@ -162,11 +162,11 @@ class Simulatore() :
         self.testo = ""
         self.righe = []
         self.testo_modificato = []
-        self.insieme_istruzioni = {"or","and","ori","andi","xor","xori","subi","sub","add","addi","addiu","addu","slt","j","jal","jalr","beq","beqz","bne","bge","blt","move","lui","srl","sll","li","la","lh","lhu","lw","lb","lbu","sw","sh","sb"} # da aggiungere ogni istruzione MIPS necessaria
+        self.insieme_istruzioni = {"or","and","ori","andi","xor","xori","subi","sub","add","addi","addiu","addu","slt","j","jal","jalr","beq","beqz","bne","bnez","bge","bgez","blt","bltz","move","lui","srl","sll","li","la","lh","lhu","lw","lb","lbu","sw","sh","sb"} # da aggiungere ogni istruzione MIPS necessaria
         # Per ogni istruzione serve un metodo definito nella classe Istruzioni nel file istruzioni_mips.py
         self.istruzioni_save = {"sw","sb","sh"}
         self.istruzioni_load = {"la","lw","lb","lbu","lh","lhu"}
-        self.istruzioni_branch = {"bne","bge","beq","beqz","blt"}
+        self.istruzioni_branch = {"bne","bnez","bge","bgez","beq","beqz","blt","bltz"}
         self.istruzioni_jump = {"j","jal","jalr"}
         self.iniziali_registri = {'a','s','t','v','r','k','1','2','3','4','5','6','7','8','9'} # Iniziali dei possibili registri ( ho escluso la f che servirebbe per i floating point registers)
         self.insieme_registri = set()
@@ -1374,7 +1374,7 @@ class Simulatore() :
         chiusa_tonda = ')'
         nome_registro = "" 
         valore_posizione = 0
-        intero_byte_memoria = 0
+        intero_byte_memoria = 0 # potrebbe essere obsoleto, da vedere se la nuova implementazione è perfetta
         istruzione_mips = ""
         not_in_range = True
         prima_posizione = ""
@@ -1443,25 +1443,50 @@ class Simulatore() :
                         valore_in_lista = 0
                         if stringa_tipo != "":
                             if stringa_tipo in insieme_byte_ascii and self.testo_modificato[indice][1] == word:
-                                controlla_len = intero_byte_memoria%4 
+                                # controlla_len = intero_byte_memoria%4 
+                                # if controlla_len != 0:
+                                #     controlla_len = 4 - controlla_len
+                                # for _ in range(0,controlla_len):
+                                #     chiave += 1 
+                                #     diz_dati[chiave] = 0
+                                if (chiave + 1) % 2 != 0: 
+                                    chiave += 1
+                                    diz_dati[chiave] = 0 
+                                controlla_len = (chiave - indirizzo_iniziale)% 4
                                 if controlla_len != 0:
                                     controlla_len = 4 - controlla_len
                                 for _ in range(0,controlla_len):
                                     chiave += 1 
                                     diz_dati[chiave] = 0
                             elif stringa_tipo in insieme_byte_ascii and self.testo_modificato[indice][1] == half:
-                                controlla_len = intero_byte_memoria%2 
+                                if (chiave + 1) % 2 != 0: 
+                                    chiave += 1
+                                    diz_dati[chiave] = 0
+                            elif stringa_tipo == half and self.testo_modificato[indice][1] == word:
+                                if (chiave + 1) % 2 != 0: 
+                                    chiave += 1
+                                    diz_dati[chiave] = 0 
+                                controlla_len = (chiave - indirizzo_iniziale)% 4
+                                if controlla_len != 0:
+                                    controlla_len = 4 - controlla_len
                                 for _ in range(0,controlla_len):
                                     chiave += 1 
                                     diz_dati[chiave] = 0
-                            elif stringa_tipo == half and self.testo_modificato[indice][1] == word:   
-                                controlla_len = intero_byte_memoria%4 
-                                if controlla_len != 0 and controlla_len != 2:
-                                    controlla_len = 3 - controlla_len  # 3 e non 4 perchè 2 (non una) posizioni già aggiunte dall'half
-                                for _ in range(0,controlla_len):
-                                    chiave += 1 
-                                    diz_dati[chiave] = 0
-                            self.diz_indirizzi[chiave_vettori] = chiave + 1  # Per indirizzo corretto 
+                                     
+                                # controlla_len = intero_byte_memoria%4 
+                                # if controlla_len != 0 and controlla_len != 2:
+                                #     controlla_len = 3 - controlla_len  # 3 e non 4 perchè 2 (non una) posizioni già aggiunte dall'half
+                                # for _ in range(0,controlla_len):
+                                #     chiave += 1 
+                                #     diz_dati[chiave] = 0
+                            if stringa_tipo in insieme_byte_ascii and self.testo_modificato[indice][1] in insieme_byte_ascii: 
+                                self.diz_indirizzi[chiave_vettori] = chiave + 1 # Si possono avere anche valori dispari
+                            else:
+                                if (chiave) % 2 != 0:    
+                                    self.diz_indirizzi[chiave_vettori] = chiave + 1  # Per indirizzo corretto
+                                else:    
+                                    self.diz_indirizzi[chiave_vettori] = chiave  # Per indirizzo corretto 
+                                    chiave = chiave - 1 # Per inserire i valori nelle giuste posizioni in memoria
                         else:
                             self.diz_indirizzi[chiave_vettori] = indirizzo_iniziale
                     elif indice_secondario > 1:
@@ -1813,7 +1838,7 @@ class Simulatore() :
                                     diz_dati[seconda_posizione] = 0
                                     indirizzo_finale = seconda_posizione 
                                 chiave_indirizzi = valore
-                            elif valore in diz_text:
+                            elif valore in diz_text and istruzione_mips == "la": # deve accadere solo quando passo indirizzi a registri, altrimenti causa problemi con branch (branch tipo beqz)
                                 seconda_posizione = diz_text[valore]
                                 chiave_indirizzi = valore
                             elif aperta_tonda in valore:
@@ -2059,7 +2084,7 @@ class Simulatore() :
                     operazione = chiama_istruzioni_mips(self.istruzioni, istruzione_mips, prima_posizione, seconda_posizione, terza_posizione)
                     if type(operazione) == tuple: # se sono tuple allora si fa un salto
                         if(operazione[1]): # se booleano a True
-                            bool_salto = True  
+                            bool_salto = True 
                             stringa_loops = operazione[0]
                         stringa_salto = operazione[0]
                         if istruzione_mips in self.istruzioni_branch:
@@ -2190,6 +2215,7 @@ class Simulatore() :
         if not bool_program_counter: 
             for diz in diz_pipeline:
                 del diz_pipeline[diz]["Program Counter"]
+                   
         #print(pc.intero)
         #print(diz_text)
         # print(self.diz_indirizzi)

@@ -84,7 +84,7 @@ class Istruzioni:
         self.diz_indirizzi = {}
         self.diz_dati = {}
         key = 268435455
-        for _ in range(268435456, 268500992):
+        for _ in range(268435456, 268500992): # dizionario con 65536 valori per simulare la memoria iniziale
             key += 1
             self.diz_dati[key] = 0
         self.diz_indirizzi_text = {}
@@ -119,7 +119,7 @@ class Istruzioni:
     # Ogni istruzione simula l'andamento del program counter grazie alla corretta rappresentazione
     # del dizionario diz_indirizzi_text ( quindi della parte .text di mars)
     
-    # Viene ritornata una stringa per ogni metodo. Questo in realtà è ridondante al momento.
+    # Viene ritornata una stringa per ogni metodo (non per le istruzioni che eseguono salti). Questo in realtà è ridondante al momento.
     
     # Quando si usa una tupla_valori è perchè l'istruzione mips associata puo avere diversi input.
     # Esempio: or $t1, $t1, 70
@@ -484,6 +484,19 @@ class Istruzioni:
                 salto = True 
         return stringa, salto
     
+    # Il metodo si occupa di simulare l'istruzione mips bltz
+    
+    def bltz(self, primo_registro_o_intero, stringa):
+        Istruzioni.incrementa_program_counter(self)
+        salto = False
+        if type(primo_registro_o_intero) == int:
+            if primo_registro_o_intero < 0:
+                salto = True
+        else:
+            if primo_registro_o_intero.intero < 0:
+                salto = True
+        return stringa, salto
+    
     # Il metodo si occupa di simulare l'istruzione mips bne
     
     def bne(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
@@ -503,6 +516,19 @@ class Istruzioni:
                 salto = True 
         return stringa, salto
     
+    # Il metodo si occupa di simulare l'istruzione mips bnez
+    
+    def bnez(self, primo_registro_o_intero, stringa):
+        Istruzioni.incrementa_program_counter(self)
+        salto = False
+        if type(primo_registro_o_intero) == int:
+            if primo_registro_o_intero != 0:
+                salto = True
+        else:
+            if primo_registro_o_intero.intero != 0:
+                salto = True
+        return stringa, salto
+    
     # Il metodo si occupa di simulare l'istruzione mips bge
     
     def bge(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
@@ -520,6 +546,19 @@ class Istruzioni:
         elif type(secondo_registro_o_intero) == int:  
             if primo_registro_o_intero.intero >= secondo_registro_o_intero:
                 salto = True 
+        return stringa, salto
+    
+    # Il metodo si occupa di simulare l'istruzione mips bgez
+    
+    def bgez(self, primo_registro_o_intero, stringa):
+        Istruzioni.incrementa_program_counter(self)
+        salto = False
+        if type(primo_registro_o_intero) == int:
+            if primo_registro_o_intero >= 0:
+                salto = True
+        else:
+            if primo_registro_o_intero.intero >= 0:
+                salto = True
         return stringa, salto
     
     # Il metodo si occupa di simulare l'istruzione mips beq
