@@ -27,7 +27,7 @@ def srl_bit(esadecimale, val):
         n += 1
         esadecimale_ris += "0"
     esadecimale_ris += esadecimale    
-    for x in range(0,val):
+    for _ in range(0,val):
         stringa_shifter += zero
     for elem in esadecimale_ris:
         stringa_bin_secondaria = bin(int(elem,16))
@@ -57,7 +57,7 @@ def sll_bit(esadecimale, val):
         n += 1
         esadecimale_ris += "0"
     esadecimale_ris += esadecimale    
-    for x in range(0,val):
+    for _ in range(0,val):
         stringa_shifter += zero
     for elem in esadecimale_ris:
         stringa_bin_secondaria = bin(int(elem,16))
@@ -75,7 +75,7 @@ def sll_bit(esadecimale, val):
 
 # La classe istruzioni
 # La classe ha vari dizionari che vengono condivisi con il simulatore nel metodo simula_codice_mips
-# Il registro program counter ( viene salvato come registro, forse potrei semplicemente usarlo come intero)
+# Il registro program counter (viene salvato come registro, potrei semplicemente usarlo come intero, anche se preferisco cosi)
 # Il registro $ra viene inizializzato qui.
 
 class Istruzioni: 
@@ -84,17 +84,22 @@ class Istruzioni:
         self.diz_indirizzi = {}
         self.diz_dati = {}
         key = 268435455
+        self.ultimo_valore_possibile = 272629759
         for _ in range(268435456, 268500992): # dizionario con 65536 valori per simulare la memoria iniziale
             key += 1
             self.diz_dati[key] = 0
         self.diz_indirizzi_text = {}
         self.diz_text = {}
-    
-        self.pc = registro.Registro("pc",4194300)
+
+        # Il program counter potrebbe essere pensato come un semplice intero che si incrementa
+        # Salvarlo come registro non è necessario, tuttavia la classe registro salva un nome e un valore, per cui ho preferito questo approccio.
+        self.pc = registro.Registro("pc", 4194300, "program counter") # il program counter non ha un valore numerico, devo inserire una stringa che non interferisca con il codice
         self.pc_finale = 0
-        self.ra = registro.Registro("$ra",0)
+        self.ra = registro.Registro("$ra", 0, "$31")
         self.bool_program_counter = True
     # Potrei aggiungere qua il registro at e poi aggiungerlo all'insieme registri in simula_codice_mips
+    
+    # Valori da non cambiare
     chiave = ""
     
     zero = "0"
@@ -674,6 +679,8 @@ class Istruzioni:
             # Evito possibili errori
         stringa_binario = tohex(self.diz_dati[chiave_in_diz],self.intero)
         stringa_binario = stringa_binario[2:] # rimuovo 0x
+        aggiungi_zeri = 2 - len(stringa_binario)
+        stringa_binario = self.zero*aggiungi_zeri + stringa_binario
         stringa_bit = bin(int(stringa_binario[0],16))
         if len(stringa_bit) == 6: # per esempio caso 0b1000 ( 8 bit a byte e se ho 1 inserisco 0xff...)
            stringa_binario = self.stringa_lb_f+stringa_binario 
