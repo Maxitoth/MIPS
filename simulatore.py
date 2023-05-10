@@ -781,11 +781,12 @@ class Simulatore():
             lista_valori_diz["Messaggio"] = messaggio_data_hazards
         return lista_valori_diz
     
-    # Il metodo si occupa di calcolare i cicli di clock per ogni parte di ogni ciclo loop trovato
-    # Ogni parte di un ciclo loop di codice (tramite jump e branch) ha un numero di bolle dovute a data hazard e control hazard,
+    # Il metodo si occupa di calcolare i cicli di clock per ogni parte di ogni loop trovato
+    # Ogni parte di un loop di codice (tramite jump e branch) ha un numero di bolle dovute a data hazard e control hazard,
     # un insieme di istruzioni, cicli di clock di quella parte e il numero di volte in cui troviamo quella parte durante l'esecuzione
-    # Se l'insieme di istruzioni trovate (righe) e il numero di cicli di clock trovati è lo stesso, allora abbiamo ritrovato la stessa parte di codice nel ciclo loop  
-    def calcola_clocks_per_parte_loops(self, conta_clocks: int, indice: int):
+    # Se l'insieme di istruzioni trovate (righe) e il numero di cicli di clock trovati è lo stesso, allora abbiamo ritrovato la stessa parte di codice nel loop  
+    def calcola_clocks_per_parte_loops(self, conta_clocks: int,
+        indice: int):
         for chiave in self.diz_loops:
             if self.diz_loops[chiave][1] == True:
                 self.diz_loops[chiave][2] += conta_clocks
@@ -1053,20 +1054,20 @@ class Simulatore():
                 if bool_decode:
                     intero_stato_forwarding = -1 # causa piu stalli
                 else:
-                    intero_stato_not_forwarding = 1 # causa self.meno stalli  
+                    intero_stato_not_forwarding = 1 # causa meno stalli  
             # Parte not forwarding
             if not bool_forwarding:
-                if primo_registro_da_controllare.istruzione_mips != "": # lo stato write back è lo stato in cui l'istruzione deve stare ( write back deve essere allineata con decode della istruzione attuale), 
-                    # quindi questo - lo stato del registro ( stato dell'istruzione in cui faceva parte il registro l'ultima volta) ci dice quanti stalli ottengo. Se è una istruzione branch
-                    # potrebbe essere write back allineata con execute ( in sostanza self.meno stalli).
+                if primo_registro_da_controllare.istruzione_mips != "": # lo stato write back è lo stato in cui l'istruzione deve stare (write back deve essere allineata con decode della istruzione attuale), 
+                    # quindi questo - lo stato del registro (stato dell'istruzione in cui faceva parte il registro l'ultima volta) ci dice quanti stalli ottengo. Se è una istruzione branch
+                    # potrebbe essere write back allineata con execute (in sostanza meno stalli).
                     stalli_primo_registro_not_forwarding = primo_registro_da_controllare.stato_write_back - primo_registro_da_controllare.stato_fase - intero_stato_not_forwarding
                     if stalli_primo_registro_not_forwarding < 0:
                         stalli_primo_registro_not_forwarding = 0
             # Parte forwarding
             else:
-                if primo_registro_da_controllare.istruzione_mips != "": # lo stato write back non è piu lo stato in cui l'istruzione deve stare ( execute o memory devono essere allineati con decode della istruzione attuale), 
-                    # quindi questo - lo stato del registro ( stato dell'istruzione in cui faceva parte il registro l'ultima volta) ci dice quanti stalli ottengo. Se è una istruzione branch
-                    # potrebbe essere execute o memory allineata con decode o fetch ( in sostanza più stalli).
+                if primo_registro_da_controllare.istruzione_mips != "": # lo stato write back non è piu lo stato in cui l'istruzione deve stare (execute o memory devono essere allineati con decode della istruzione attuale), 
+                    # quindi questo - lo stato del registro (stato dell'istruzione in cui faceva parte il registro l'ultima volta) ci dice quanti stalli ottengo. Se è una istruzione branch
+                    # potrebbe essere execute o memory allineata con decode o fetch (in sostanza più stalli).
                     istruzione_registro = primo_registro_da_controllare.istruzione_mips
                     if istruzione_registro in self.istruzioni_load and istruzione_registro != "la": # la si fa prima della memoria
                         stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 1 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding 
@@ -1515,7 +1516,7 @@ class Simulatore():
                         aggiungi_dati = True
                     if valore == self.text:
                         aggiungi_dati = False
-                        if not chiave == indirizzo_iniziale - 1: # se avessi .text senza parte .data il valore 268500991 non va usato in indirizzo finale
+                        if chiave != indirizzo_iniziale - 1: # se avessi .text senza parte .data il valore 268500991 non va usato in indirizzo finale
                             indirizzo_finale = chiave
                         self.istruzioni.diz_dati = diz_dati
                     break
