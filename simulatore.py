@@ -27,7 +27,7 @@
 # Non vengono trovati gli indirizzi di memoria corretti o inseriti valori corretti in memoria 
 # per esempio F: .ascii "ty" "as" "" o F: .asciiz "ty" "as" "" non vanno bene a causa della stringa vuota
 # Funziona: F: .ascii "" o F: .asciiz ""
-# Viene usato un carattere speciale definito in carattere_speciale in modifica_testo
+# Viene usato un carattere speciale definito in carattere_speciale nel metodo _init_ 
 # Il carattere speciale non va usato ma può essere cambiato, io ho scelto µ. 
 
 # Ho fatto test e aggiornato il codice in modo che vengano riportati i dati corretti anche per l'istruzione syscall
