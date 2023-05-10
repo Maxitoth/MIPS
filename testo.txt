@@ -1,19 +1,33 @@
+.globl main
+
 .data
-S: .byte 0,7,8,9,0,-1
+M: .word 0, 151, 4885, 200, 19, 87
+N: .byte 6
+
 .text
-main: la $a0, S  
-li $v0, 0  
-li $v1, 0  
-li $t1, -1  
-cycle: lb $s0, ($a0)            
-beq $s0, $t1, exit                                                
-beq $s0, $zero, endIf          
-andi $s0, $s0, 1      
-beq $s0, $zero, pari               
-addi $v1, $v1, 1    
-j endIf    
-pari: addi $v0, $v0, 1     
-endIf: addi $a0, $a0, 1                
-j cycle          
-exit: addi $v0, $zero, 10     
+main: la $a0, M
+lb $a1, N
+sll $t7, $a1, 2
+add $t7, $t7, $a0
+sub $v0, $t7, $t7
+add $v1, $v0, $v0
+cycl: bge $a0, $t7, exit
+lw $s0, ($a0)
+sll $s0, $s0, 31
+beq $s0, $0, odd
+addi $v1, $v1, 1
+j endC
+odd: addi $v0, $v0, 1
+endC: addi $a0, $a0, 4
+j cycl
+exit: add $a0, $v0, $zero
+addi $v0, $zero, 1
+syscall
+addi $v0, $zero, 11
+addi $a0, $0, 0x0A
+syscall
+addi $v0, $zero, 1
+add $a0, $v1, $zero
+syscall
+addi $v0, $zero, 10
 syscall
