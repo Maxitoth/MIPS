@@ -9,7 +9,7 @@
 # su una riga di testo (parte .text in mars) perche i vari dizionari che tengono conto della posizione della riga avranno dati errati.
 # Serve sempre uno studio approfondito su ogni istruzione per poter simulare il program counter.
 
-class Program_counter():
+class ProgramCounter:
     
     def __init__(self) -> None:
         self.indirizzo_text = 4194300
@@ -39,38 +39,38 @@ class Program_counter():
             if self.range_meno_trenta <= valore <= self.range_piu_trenta:
                 return indirizzo_text
             else:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
                 return indirizzo_text
         if istruzione == self.istruzione_addu:
             if type(valore) == bool and not carattere_trovato:
                 return indirizzo_text
             else:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
                 return indirizzo_text
         if istruzione in self.insieme_beq_subi: # Simulo program counter
             if carattere_trovato:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
                 return indirizzo_text
             if type(valore) == bool:
                 return indirizzo_text
             if self.range_meno_trenta <= valore <= self.range_piu_trenta:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
                 return indirizzo_text
             else:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2) 
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2) 
                 return indirizzo_text
         if istruzione == self.istruzione_la: # Simulo program counter
             if carattere_trovato or type(valore) == bool:
                 return indirizzo_text
             if self.range_meno_trenta <= valore <= self.range_sessanta:
                 if valore_con_tonda_trovato:
-                    indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
+                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
                 return indirizzo_text
             else:
                 if valore_con_tonda_trovato:
-                    indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
+                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
                 else:
-                    indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
+                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
                 return indirizzo_text
         if istruzione in self.insieme_ori: # Simulo program counter
             if carattere_trovato or type(valore) == bool:
@@ -78,7 +78,7 @@ class Program_counter():
             if self.zero <= valore <= self.range_sessanta:
                 return indirizzo_text
             else:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2) 
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2) 
                 return indirizzo_text
         if istruzione in self.insieme_save_load: # Simulo program counter
             if carattere_trovato or type(valore) == bool:
@@ -87,9 +87,9 @@ class Program_counter():
                 return indirizzo_text
             else:
                 if valore_con_tonda_trovato:
-                    indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
+                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
                 else:
-                    indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
+                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
                 return indirizzo_text
         if istruzione == self.istruzione_li: # Simulo program counter
             if carattere_trovato or type(valore) == bool:
@@ -97,17 +97,17 @@ class Program_counter():
             if self.range_meno_trenta <= valore <= self.range_sessanta:
                 return indirizzo_text
             else:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
                 return indirizzo_text
         if istruzione in self.insieme_bge: # Simulo program counter
             if carattere_trovato or type(valore) == bool:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
                 return indirizzo_text
             if self.range_meno_trenta <= valore <= self.range_piu_trenta:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
                 return indirizzo_text
             else:
-                indirizzo_text = Program_counter.trova_indirizzo_testo_corretto(self, indirizzo_text, 3) 
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 3) 
                 return indirizzo_text
        
     # Il metodo si occupa di aggiungere gli indirizzi corretti, dovuti alle pseudo-istruzioni,

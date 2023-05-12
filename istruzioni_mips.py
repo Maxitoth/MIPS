@@ -23,24 +23,24 @@ def srl_bit(esadecimale, val):
     esadecimale = esadecimale[2:]
     esadecimale_ris = ""
     n = len(esadecimale)
-    while n < 8:
+    while n < 8: # Devo avere 8 esadecimali (aggiungo zeri)
         n += 1
-        esadecimale_ris += "0"
+        esadecimale_ris += zero
     esadecimale_ris += esadecimale    
-    for _ in range(0,val):
+    for _ in range(0,val): # Numero di zeri da aggiungere per lo shift
         stringa_shifter += zero
-    for elem in esadecimale_ris:
+    for elem in esadecimale_ris: # Converto ogni esadecimale in binario (4 bit per ogni esadecimale)
         stringa_bin_secondaria = bin(int(elem,16))
         stringa_bin_secondaria = stringa_bin_secondaria[2:]
-        if len(stringa_bin_secondaria) == 3:
+        if len(stringa_bin_secondaria) == 3: # Servono 4 bit (aggiungo zero)
             stringa_bin_secondaria = zero + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 2:
+        elif len(stringa_bin_secondaria) == 2: # Servono 4 bit (aggiungo zero)
             stringa_bin_secondaria = zero*2 + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 1:
-            stringa_bin_secondaria = zero*3 + stringa_bin_secondaria
+        elif len(stringa_bin_secondaria) == 1: # Servono 4 bit (aggiungo zero)
+            stringa_bin_secondaria = zero*3 + stringa_bin_secondaria 
         stringa_bin_ris += stringa_bin_secondaria 
-    stringa_bin_ris = stringa_shifter + stringa_bin_ris[0:len(stringa_bin_ris)-val] 
-    stringa_bin_ris = tohex(int(stringa_bin_ris,2),32)
+    stringa_bin_ris = stringa_shifter + stringa_bin_ris[0:len(stringa_bin_ris)-val] # Ottengo la stringa risultante dallo shift
+    stringa_bin_ris = tohex(int(stringa_bin_ris,2),32) # Riconverto in esadecimale
     return stringa_bin_ris
 
 # La funzione si occupa di eseguire uno shift left logic di val posizioni
@@ -53,24 +53,24 @@ def sll_bit(esadecimale, val):
     esadecimale = esadecimale[2:]
     esadecimale_ris = ""
     n = len(esadecimale)
-    while n < 8:
+    while n < 8: # Devo avere 8 esadecimali (aggiungo zeri)
         n += 1
-        esadecimale_ris += "0"
+        esadecimale_ris += zero
     esadecimale_ris += esadecimale    
-    for _ in range(0,val):
+    for _ in range(0,val): # Numero di zeri da aggiungere per lo shift
         stringa_shifter += zero
-    for elem in esadecimale_ris:
+    for elem in esadecimale_ris: # Converto ogni esadecimale in binario (4 bit per ogni esadecimale)
         stringa_bin_secondaria = bin(int(elem,16))
         stringa_bin_secondaria = stringa_bin_secondaria[2:]
-        if len(stringa_bin_secondaria) == 3:
+        if len(stringa_bin_secondaria) == 3: # Servono 4 bit (aggiungo zero)
             stringa_bin_secondaria = zero + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 2:
+        elif len(stringa_bin_secondaria) == 2: # Servono 4 bit (aggiungo zero)
             stringa_bin_secondaria = zero*2 + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 1:
+        elif len(stringa_bin_secondaria) == 1: # Servono 4 bit (aggiungo zero)
             stringa_bin_secondaria = zero*3 + stringa_bin_secondaria
         stringa_bin_ris += stringa_bin_secondaria 
-    stringa_bin_ris = stringa_bin_ris[-len(stringa_bin_ris)+val:] + stringa_shifter
-    stringa_bin_ris = tohex(int(stringa_bin_ris,2),32)
+    stringa_bin_ris = stringa_bin_ris[-len(stringa_bin_ris)+val:] + stringa_shifter # Ottengo la stringa risultante dallo shift
+    stringa_bin_ris = tohex(int(stringa_bin_ris,2),32) # Riconverto in esadecimale
     return stringa_bin_ris       
 
 # La classe istruzioni
@@ -83,10 +83,8 @@ class Istruzioni:
     def __init__(self):
         self.diz_indirizzi = {}
         self.diz_dati = {}
-        key = 268435455
         self.ultimo_valore_possibile = 272629759
-        for _ in range(268435456, 268500992): # dizionario con 65536 valori per simulare la memoria iniziale
-            key += 1
+        for key in range(268435456, 268500993): # dizionario con 65536 valori per simulare la memoria iniziale
             self.diz_dati[key] = 0
         self.diz_indirizzi_text = {}
         self.diz_text = {}
@@ -410,6 +408,7 @@ class Istruzioni:
         else:
             stringa_esadecimale = srl_bit(tohex(primo_registro_o_intero.intero,32),secondo_intero) # controllo sul valore per dare una giusta 
             # rappresentazione a 32 bit
+            esa = tohex(primo_registro_o_intero.intero >> 10,32)
             registro_destinazione.intero = toint(int(stringa_esadecimale, 16))
         return "registro modificato"
     
@@ -421,10 +420,7 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(primo_registro) == int:
-            stringa_hex_primo_registro = tohex(primo_registro,self.intero)
-        else:
-            stringa_hex_primo_registro = tohex(primo_registro.intero,self.intero)
+        stringa_hex_primo_registro = tohex(primo_registro.intero,self.intero)
         stringa_hex_primo_registro = stringa_hex_primo_registro[2:] # rimuovo 0x
         aggiungi_zeri = 8 - len(stringa_hex_primo_registro)
         stringa_hex_primo_registro = self.zero*aggiungi_zeri + stringa_hex_primo_registro 
@@ -442,10 +438,7 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(primo_registro) == int:
-            stringa_hex_primo_registro = tohex(primo_registro,self.intero)
-        else:
-            stringa_hex_primo_registro = tohex(primo_registro.intero,self.intero)
+        stringa_hex_primo_registro = tohex(primo_registro.intero,self.intero)
         stringa_hex_primo_registro = stringa_hex_primo_registro[2:] # rimuovo 0x
         aggiungi_zeri = 8 - len(stringa_hex_primo_registro)
         stringa_hex_primo_registro = self.zero*aggiungi_zeri + stringa_hex_primo_registro 
@@ -461,10 +454,7 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori 
-        if type(primo_registro) == int:
-            stringa_hex_primo_registro = tohex(primo_registro,self.intero)
-        else:
-            stringa_hex_primo_registro = tohex(primo_registro.intero,self.intero)
+        stringa_hex_primo_registro = tohex(primo_registro.intero,self.intero)
         stringa_hex_primo_registro = stringa_hex_primo_registro[2:] # rimuovo 0x
         stringa_hex_primo_registro = stringa_hex_primo_registro[-2:]
         self.diz_dati[chiave_in_diz] = int(stringa_hex_primo_registro,16)
@@ -677,7 +667,7 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = tohex(self.diz_dati[chiave_in_diz],self.intero)
+        stringa_binario = hex(self.diz_dati[chiave_in_diz])
         stringa_binario = stringa_binario[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(stringa_binario)
         stringa_binario = self.zero*aggiungi_zeri + stringa_binario
@@ -697,10 +687,10 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = tohex(self.diz_dati[chiave_in_diz],self.intero)
+        stringa_binario = hex(self.diz_dati[chiave_in_diz])
         stringa_binario = stringa_binario[2:] # rimuovo 0x
         registro_destinazione.intero = int(stringa_binario,16) # positivo
-        return "registro modificato"        
+        return "registro modificato"      
     
     # Il metodo si occupa di simulare l'istruzione mips lh
     
@@ -710,10 +700,10 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = tohex(self.diz_dati[chiave_in_diz+1],self.intero)[2:] # rimuovo 0x
+        stringa_binario = hex(self.diz_dati[chiave_in_diz+1])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(stringa_binario)
         stringa_binario = self.zero*aggiungi_zeri + stringa_binario
-        seconda_stringa_binario = tohex(self.diz_dati[chiave_in_diz],self.intero)[2:]
+        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(seconda_stringa_binario)
         seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
         stringa_binario = stringa_binario + seconda_stringa_binario
@@ -733,10 +723,10 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = tohex(self.diz_dati[chiave_in_diz+1],self.intero)[2:] # rimuovo 0x
+        stringa_binario = hex(self.diz_dati[chiave_in_diz+1])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(stringa_binario)
         stringa_binario = self.zero*aggiungi_zeri + stringa_binario
-        seconda_stringa_binario = tohex(self.diz_dati[chiave_in_diz],self.intero)[2:]
+        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(seconda_stringa_binario)
         seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
         stringa_binario = stringa_binario + seconda_stringa_binario
@@ -751,22 +741,22 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = tohex(self.diz_dati[chiave_in_diz+3],self.intero)[2:] # rimuovo 0x
+        stringa_binario = hex(self.diz_dati[chiave_in_diz+3])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(stringa_binario)
         stringa_binario = self.zero*aggiungi_zeri + stringa_binario
-        seconda_stringa_binario = tohex(self.diz_dati[chiave_in_diz+2],self.intero)[2:] # rimuovo 0x
+        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz+2])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(seconda_stringa_binario)
         seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
         stringa_binario = stringa_binario + seconda_stringa_binario
-        seconda_stringa_binario = tohex(self.diz_dati[chiave_in_diz+1],self.intero)[2:] # rimuovo 0x
+        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz+1])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(seconda_stringa_binario)
         seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
         stringa_binario = stringa_binario + seconda_stringa_binario
-        seconda_stringa_binario = tohex(self.diz_dati[chiave_in_diz],self.intero)[2:]# rimuovo 0x
+        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(seconda_stringa_binario)
         seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
         stringa_binario = stringa_binario + seconda_stringa_binario
-        registro_destinazione.intero = toint(int(stringa_binario,16))
+        registro_destinazione.intero = toint(int(stringa_binario,16)) # positivo o negativo
         return "registro modificato" 
     
     # Il metodo si occupa di simulare l'istruzione mips la

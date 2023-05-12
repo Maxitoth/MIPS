@@ -42,7 +42,10 @@
 # Eccezione alla regola: le istruzioni branch possono eseguirsi in fase di execute e se questa funzionalità è abilitata
 # allora ottengo un minor numero di stalli.
 
-# Vengono trovati tutti i possibili control hazard (che siano dovuti all'esecuzione del codice o self.meno)
+# Vengono trovati tutti i possibili control hazard (che siano dovuti all'esecuzione del codice o meno)
+
+# le lw e le lh (anche per sw e sh) funzionano anche accedendo a valori di indirizzi in memoria dispari (è scorretto e andrebbe testato il codice prima su MARS (sarebbe presente un errore) per verificare che gli indirizzi in cui si accede siano sempre pari 
+# oppure aggiungere una exception nei quattro metodi (sh, sw, lh, lw))
 
 
 import registro
@@ -66,7 +69,7 @@ def chiama_istruzioni_mips(oggetto_classe_istruzioni, nome_istruzione, prima_pos
         stringa_jalr = "jalr" 
         # servirebbe un insieme per istruzioni con piu input come la jalr e cosi ogni istruizione con piu
         # input la metto nel caso jalr
-        # and, or, xor fanno due istruzioni (and, andi, or , ori, xor, xori)
+        # and, or, xor fanno due istruzioni (and, andi, or, ori, xor, xori)
         if nome_istruzione == stringa_and or nome_istruzione == stringa_andi: 
             nome_istruzione = "aand"
             metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
@@ -94,9 +97,10 @@ def chiama_istruzioni_mips(oggetto_classe_istruzioni, nome_istruzione, prima_pos
         else:    
             return metodo(prima_posizione, seconda_posizione, terza_posizione) 
         
-# Il metodo si occupa di generare un file excel con uno o tre fogli
+# Il metodo si occupa di generare un file excel con due o quattro fogli
 # Se i booleani sono a False il metodo non fa nulla 
-# Altrimenti possono essere generati tre fogli per un file excel: uno per il risultato dell'esecuzione del codice mips,
+# Altrimenti possono essere generati quattro fogli per un file excel: uno per il risultato dell'esecuzione del codice mips,
+# uno per la rappresentazione della pipeline durante l'esecuzione,
 # e uno per il risultato dei data hazards e control hazards possibili, e uno per i cicli di clock trovati durante l'esecuzione.
         
 def genera_excel(json_object_pipeline, json_object_rappresentazione, json_object_hazards, json_object_clocks, bool_forwarding: bool, bool_excel_pipeline: bool, bool_excel_hazards: bool):
@@ -227,7 +231,7 @@ def rappresenta_pipeline(diz_righe, riga_iniziale, riga_finale, lista_pipeline, 
 
 # La classe Simulatore si occupa di simulare il codice mips.
 
-class Simulatore():
+class Simulatore:
     
     def __init__(self):
         self.testo = "" # testo preso in input
@@ -249,7 +253,7 @@ class Simulatore():
         self.insieme_data_hazards = set() # L'insieme che conterrà tutti i data hazard possibili
         self.insieme_control_hazards = set() # L'insieme che conterrà tutti i control hazard possibili
         self.istruzioni = istruzioni_mips.Istruzioni() # Oggetto di classe Istruzioni usato per ottenere per esempio il dizionario che simula la memoria
-        self.program_counter = program_counter.Program_counter() # Oggetto di classe Program_counter usato per ottenere il dizionario che contiene gli indirizzi del testo
+        self.program_counter = program_counter.ProgramCounter() # Oggetto di classe ProgramCounter usato per ottenere il dizionario che contiene gli indirizzi del testo
         self.diz_indirizzi = {} # dizionario che conterrà tutti gli indirizzi iniziali delle strutture dati trovate in input (parte .data)
         self.diz_righe = {} # dizionario che conterrà come chiave indice riga e come valore la riga del testo
         self.bool_forwarding = False # booleano per salvare il fatto che si applica forwarding o self.meno
@@ -1393,13 +1397,13 @@ class Simulatore():
     def aggiorna_diz_memoria_word(self, valore_in_lista: str, chiave: int):
         aggiungi_zeri = 8 - len(valore_in_lista) # Non dovrebbe superare 8 di len
         valore_in_lista = self.zero*aggiungi_zeri + valore_in_lista 
-        self.istruzioni.diz_dati[chiave] = istruzioni_mips.toint(int(valore_in_lista[-2:],16))
+        self.istruzioni.diz_dati[chiave] = int(valore_in_lista[-2:],16)
         chiave += 1
-        self.istruzioni.diz_dati[chiave] = istruzioni_mips.toint(int(valore_in_lista[-4:-2],16))
+        self.istruzioni.diz_dati[chiave] = int(valore_in_lista[-4:-2],16)
         chiave += 1
-        self.istruzioni.diz_dati[chiave] = istruzioni_mips.toint(int(valore_in_lista[-6:-4],16))
+        self.istruzioni.diz_dati[chiave] = int(valore_in_lista[-6:-4],16)
         chiave += 1
-        self.istruzioni.diz_dati[chiave] = istruzioni_mips.toint(int(valore_in_lista[-8:-6],16))
+        self.istruzioni.diz_dati[chiave] = int(valore_in_lista[-8:-6],16)
         return chiave
     
     # Il metodo si occupa di aggiornare il dizionario che simula la memoria con i dati passati in input (parte .data)
@@ -1408,15 +1412,15 @@ class Simulatore():
     def aggiorna_diz_memoria_half(self, valore_in_lista: str, chiave: int):
         aggiungi_zeri = 8 - len(valore_in_lista) # Non dovrebbe superare 8 di len
         valore_in_lista = self.zero*aggiungi_zeri + valore_in_lista
-        self.istruzioni.diz_dati[chiave] = istruzioni_mips.toint(int(valore_in_lista[-2:],16))
+        self.istruzioni.diz_dati[chiave] = int(valore_in_lista[-2:],16)
         chiave += 1
-        self.istruzioni.diz_dati[chiave] = istruzioni_mips.toint(int(valore_in_lista[-4:-2],16)) 
+        self.istruzioni.diz_dati[chiave] = int(valore_in_lista[-4:-2],16) 
         return chiave
     
     # Il metodo si occupa di aggiornare il dizionario che simula la memoria con i dati passati in input (parte .data)
     # I dati analizzati per questo metodo sono di tipo byte
     def aggiorna_diz_memoria_byte(self, valore_in_lista: str, chiave: int):
-        self.istruzioni.diz_dati[chiave] = istruzioni_mips.toint(int(valore_in_lista[-2:],16))
+        self.istruzioni.diz_dati[chiave] = int(valore_in_lista[-2:],16)
         
  
     # Il metodo si occupa di simulare l'esecuzione del codice mips.
@@ -1810,7 +1814,7 @@ class Simulatore():
                             prima_posizione = valore
                             valore_posizione += 1 # mmm non credo serva ma per ora lascio stare
                     elif valore_posizione == 2: # Controllo seconda posizione
-                        if (valore[0].isdigit() or valore[0] == self.meno or valore[0] == self.piu) and self.aperta_tonda not in valore: # Potremmo avere 100($s7), e vari casi particolari
+                        if (valore[0].isdigit() or valore[0] == self.meno or valore[0] == self.piu) and self.aperta_tonda not in valore: # Trovo un intero esadecimale o decimale 
                             stringa_corretta = valore
                             if stringa_corretta.startswith(self.piu):
                                 stringa_corretta = stringa_corretta[1:] # rimuovo il + fastidioso
@@ -1818,6 +1822,21 @@ class Simulatore():
                                 seconda_posizione = istruzioni_mips.toint(int(stringa_corretta, 16))
                             else:
                                 seconda_posizione = int(stringa_corretta)
+                            # Vedo se si cerca di accedere alla memoria solo con un intero
+                            if (istruzione_mips in self.istruzioni_load or istruzione_mips in self.istruzioni_save) and istruzione_mips != "la":       
+                                if seconda_posizione <= indirizzo_finale - 4: # -4 per evitare out of range in lw
+                                    not_in_range = False  
+                                if not_in_range: # Simulo la memoria
+                                    chiave = indirizzo_finale
+                                    try:
+                                        assert(seconda_posizione <= self.istruzioni.ultimo_valore_possibile), "Errore, il calcolo dell'indirizzo in memoria supera i limiti permessi (indirizzo 272629759 superato), riga: "+str(indice+1)+", "+self.diz_righe[indice+1]
+                                    except AssertionError as messaggio_errore:
+                                        print(messaggio_errore)
+                                        sys.exit(1)  
+                                    for _ in range(0,seconda_posizione - indirizzo_finale + 4): # +4 per evitare out of range in lw
+                                        chiave += 1
+                                        diz_dati[chiave] = 0
+                                    indirizzo_finale = chiave
                         else:
                             if valore in self.diz_indirizzi: # Caso indirizzi in .data
                                 seconda_posizione = self.diz_indirizzi[valore] # passo l'indirizzo 
@@ -1838,7 +1857,7 @@ class Simulatore():
                                         if reg.nome == nome_registro:
                                             if reg.intero in diz_dati:         
                                                 seconda_posizione = reg.intero
-                                                if reg.intero != indirizzo_finale:
+                                                if reg.intero <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                                     not_in_range = False
                                             if not_in_range: # Simulo la memoria
                                                 chiave = indirizzo_finale
@@ -1847,7 +1866,7 @@ class Simulatore():
                                                 except AssertionError as messaggio_errore:
                                                     print(messaggio_errore)
                                                     sys.exit(1) 
-                                                for _ in range(0,reg.intero - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                                for _ in range(0,reg.intero - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                                     chiave += 1
                                                     diz_dati[chiave] = 0
                                                 seconda_posizione = reg.intero
@@ -1878,11 +1897,10 @@ class Simulatore():
                                                 if reg.intero + intero_stringa in diz_indirizzi_text: # Funziona, ma causera problemi se vogliamo fare per esempio una jalr in una pseudo istruzione
                                                     # non presente quindi nel testo. Potrei simularlo facendo una jump piu avanti ma non traduce l'esecuzione corretta
                                                     seconda_posizione = reg.intero + intero_stringa
-                                                    if reg.intero + intero_stringa != indirizzo_finale:
-                                                        not_in_range = False
+                                                    not_in_range = False # Simulo istruzione la, non passo per la memoria
                                                 elif reg.intero + intero_stringa in diz_dati:
                                                     seconda_posizione = reg.intero + intero_stringa
-                                                    if reg.intero + intero_stringa != indirizzo_finale:
+                                                    if reg.intero + intero_stringa <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                                         not_in_range = False
                                                 if not_in_range: # Simulo la memoria
                                                     chiave = indirizzo_finale
@@ -1891,7 +1909,7 @@ class Simulatore():
                                                     except AssertionError as messaggio_errore:
                                                         print(messaggio_errore)
                                                         sys.exit(1)            
-                                                    for _ in range(0,reg.intero + intero_stringa - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                                    for _ in range(0,reg.intero + intero_stringa - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                                         chiave += 1
                                                         diz_dati[chiave] = 0
                                                     seconda_posizione = reg.intero + intero_stringa
@@ -1915,20 +1933,19 @@ class Simulatore():
                                                 elif reg.intero + intero_indirizzo + intero_stringa in diz_indirizzi_text: # Funziona, ma causera problemi se vogliamo fare per esempio una jalr in una pseudo istruzione
                                                     # non presente quindi nel testo. Potrei simularlo facendo una jump piu avanti ma non traduce l'esecuzione corretta
                                                     seconda_posizione = reg.intero + intero_indirizzo + intero_stringa
-                                                    if reg.intero + intero_indirizzo + intero_stringa != indirizzo_finale:
-                                                        not_in_range = False
+                                                    not_in_range = False # Simulo istruzione la, non passo per la memoria
                                                 elif reg.intero + intero_indirizzo + intero_stringa in diz_dati:
                                                     seconda_posizione = reg.intero + intero_indirizzo + intero_stringa
-                                                    if reg.intero + intero_indirizzo + intero_stringa != indirizzo_finale:
+                                                    if reg.intero + intero_indirizzo + intero_stringa <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                                         not_in_range = False
-                                                elif not_in_range: # Simulo la memoria
+                                                if not_in_range: # Simulo la memoria
                                                     chiave = indirizzo_finale
                                                     try:
                                                         assert(reg.intero + intero_indirizzo + intero_stringa <= self.istruzioni.ultimo_valore_possibile), "Errore, il calcolo dell'indirizzo in memoria supera i limiti permessi (indirizzo 272629759 superato), riga: "+str(indice+1)+", "+self.diz_righe[indice+1]
                                                     except AssertionError as messaggio_errore:
                                                         print(messaggio_errore)
                                                         sys.exit(1) 
-                                                    for _ in range(0,reg.intero + intero_indirizzo + intero_stringa - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                                    for _ in range(0,reg.intero + intero_indirizzo + intero_stringa - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                                         chiave += 1
                                                         diz_dati[chiave] = 0
                                                     seconda_posizione = reg.intero + intero_indirizzo + intero_stringa
@@ -1943,20 +1960,19 @@ class Simulatore():
                                                 elif reg.intero + intero_indirizzo in diz_indirizzi_text: # Funziona, ma causera problemi se vogliamo fare per esempio una jalr in una pseudo istruzione
                                                     # non presente quindi nel testo. Potremmo simularlo facendo una jump piu avanti ma non traduce l'esecuzione corretta
                                                     seconda_posizione = reg.intero + intero_indirizzo
-                                                    if reg.intero + intero_indirizzo != indirizzo_finale:
-                                                        not_in_range = False
+                                                    not_in_range = False # Simulo istruzione la, non passo per la memoria
                                                 elif reg.intero + intero_indirizzo in diz_dati:
                                                     seconda_posizione = reg.intero + intero_indirizzo
-                                                    if reg.intero + intero_indirizzo != indirizzo_finale:
+                                                    if reg.intero + intero_indirizzo <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                                         not_in_range = False
-                                                elif not_in_range: # Simulo la memoria
+                                                if not_in_range: # Simulo la memoria
                                                     chiave = indirizzo_finale
                                                     try:
                                                         assert(reg.intero + intero_indirizzo <= self.istruzioni.ultimo_valore_possibile), "Errore, il calcolo dell'indirizzo in memoria supera i limiti permessi (indirizzo 272629759 superato), riga: "+str(indice+1)+", "+self.diz_righe[indice+1]
                                                     except AssertionError as messaggio_errore:
                                                         print(messaggio_errore)
                                                         sys.exit(1)
-                                                    for _ in range(0,reg.intero + intero_indirizzo - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                                    for _ in range(0,reg.intero + intero_indirizzo - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                                         chiave += 1
                                                         diz_dati[chiave] = 0
                                                     seconda_posizione = reg.intero + intero_indirizzo
@@ -1966,7 +1982,7 @@ class Simulatore():
                                     if not registro_trovato:
                                         if stringa_valore_intero == "": # Caso $zero o $0 e da errori in mars
                                             seconda_posizione = 0 # Andrà in out of range
-                                        else: # Permetto l'uso di registri come $zero o $0, se i valori sono corretti non si hanno problemi sul simulatore Mars e quindi nemself.meno qui
+                                        else: # Permetto l'uso di registri come $zero o $0, se i valori sono corretti non si hanno problemi sul simulatore Mars e quindi nemmeno qui
                                             # Altrimenti si avranno eccezioni su python o risultati indesiderati. 
                                             if stringa_valore_intero.isdigit() or stringa_valore_intero[0] == self.carattere_virgoletta or stringa_valore_intero[0] == self.meno or stringa_valore_intero.startswith(self.zero_x): # ho trovato 1($zero)
                                                 if stringa_valore_intero.startswith(self.zero_x) or stringa_valore_intero.startswith(self.meno_zero_x):
@@ -1978,20 +1994,19 @@ class Simulatore():
                                                 if intero_stringa in diz_indirizzi_text: # Funziona, ma causera problemi se vogliamo fare per esempio una jalr in una pseudo istruzione
                                                     # non presente quindi nel testo. Potremmo simularlo facendo una jump piu avanti ma non traduce l'esecuzione corretta
                                                     seconda_posizione = intero_stringa
-                                                    if intero_stringa != indirizzo_finale:
-                                                        not_in_range = False
+                                                    not_in_range = False # Simulo istruzione la, non passo per la memoria
                                                 elif intero_stringa in diz_dati:
                                                     seconda_posizione = intero_stringa
-                                                    if intero_stringa != indirizzo_finale:
+                                                    if intero_stringa <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                                         not_in_range = False
-                                                elif not_in_range: # Simulo la memoria
+                                                if not_in_range: # Simulo la memoria
                                                     chiave = indirizzo_finale
                                                     try:
                                                         assert(intero_stringa <= self.istruzioni.ultimo_valore_possibile), "Errore, il calcolo dell'indirizzo in memoria supera i limiti permessi (indirizzo 272629759 superato), riga: "+str(indice+1)+", "+self.diz_righe[indice+1]
                                                     except AssertionError as messaggio_errore:
                                                         print(messaggio_errore)
                                                         sys.exit(1)
-                                                    for _ in range(0,intero_stringa - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                                    for _ in range(0,intero_stringa - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                                         chiave += 1
                                                         diz_dati[chiave] = 0
                                                     seconda_posizione = intero_stringa
@@ -2014,20 +2029,19 @@ class Simulatore():
                                                 elif intero_indirizzo + intero_stringa in diz_indirizzi_text: # Funziona, ma causera problemi se vogliamo fare per esempio una jalr in una pseudo istruzione
                                                     # non presente quindi nel testo. Potremmo simularlo facendo una jump piu avanti ma non traduce l'esecuzione corretta
                                                     seconda_posizione = intero_indirizzo + intero_stringa
-                                                    if intero_indirizzo + intero_stringa != indirizzo_finale:
-                                                        not_in_range = False
+                                                    not_in_range = False # Simulo istruzione la, non passo per la memoria
                                                 elif intero_indirizzo + intero_stringa in diz_dati:
                                                     seconda_posizione = intero_indirizzo + intero_stringa
-                                                    if intero_indirizzo + intero_stringa != indirizzo_finale:
+                                                    if intero_indirizzo + intero_stringa <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                                         not_in_range = False
-                                                elif not_in_range: # Simulo la memoria
+                                                if not_in_range: # Simulo la memoria
                                                     chiave = indirizzo_finale
                                                     try:
                                                         assert(intero_indirizzo + intero_stringa <= self.istruzioni.ultimo_valore_possibile), "Errore, il calcolo dell'indirizzo in memoria supera i limiti permessi (indirizzo 272629759 superato), riga: "+str(indice+1)+", "+self.diz_righe[indice+1]
                                                     except AssertionError as messaggio_errore:
                                                         print(messaggio_errore)
                                                         sys.exit(1)
-                                                    for _ in range(0,intero_indirizzo + intero_stringa - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                                    for _ in range(0,intero_indirizzo + intero_stringa - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                                         chiave += 1
                                                         diz_dati[chiave] = 0
                                                     seconda_posizione = intero_indirizzo + intero_stringa
@@ -2042,25 +2056,24 @@ class Simulatore():
                                                 elif intero_indirizzo in diz_indirizzi_text: # Funziona, ma causera problemi se vogliamo fare per esempio una jalr in una pseudo istruzione
                                                     # non presente quindi nel testo. Potremmo simularlo facendo una jump piu avanti ma non traduce l'esecuzione corretta
                                                     seconda_posizione = intero_indirizzo
-                                                    if intero_indirizzo != indirizzo_finale:
-                                                        not_in_range = False
+                                                    not_in_range = False # Simulo istruzione la, non passo per la memoria
                                                 elif intero_indirizzo in diz_dati:
                                                     seconda_posizione = intero_indirizzo
-                                                    if intero_indirizzo != indirizzo_finale:
+                                                    if intero_indirizzo <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                                         not_in_range = False
-                                                elif not_in_range: # Simulo la memoria
+                                                if not_in_range: # Simulo la memoria
                                                     chiave = indirizzo_finale
                                                     try:
                                                         assert(intero_indirizzo <= self.istruzioni.ultimo_valore_possibile), "Errore, il calcolo dell'indirizzo in memoria supera i limiti permessi (indirizzo 272629759 superato), riga: "+str(indice+1)+", "+self.diz_righe[indice+1]
                                                     except AssertionError as messaggio_errore:
                                                         print(messaggio_errore)
                                                         sys.exit(1)
-                                                    for _ in range(0,intero_indirizzo - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                                    for _ in range(0,intero_indirizzo - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                                         chiave += 1
                                                         diz_dati[chiave] = 0
                                                     seconda_posizione = intero_indirizzo
                                                     indirizzo_finale = chiave          
-                            elif self.piu in valore: # il piu è alself.meno in seconda posizione 
+                            elif self.piu in valore: # il piu è almeno in seconda posizione 
                                 chiave_vettori = valore[0:valore.index(self.piu)]
                                 stringa_valore_intero = valore[valore.index(self.piu)+1:]
                                 if stringa_valore_intero.startswith(self.zero_x) or stringa_valore_intero.startswith(self.meno_zero_x) or stringa_valore_intero.startswith(self.piu_zero_x):
@@ -2078,20 +2091,19 @@ class Simulatore():
                                 elif intero_indirizzo + intero_stringa in diz_indirizzi_text: # Funziona, ma causera problemi se vogliamo fare per esempio una jalr in una pseudo istruzione
                                     # non presente quindi nel testo. Potremmo simularlo facendo una jump piu avanti ma non traduce l'esecuzione corretta
                                     seconda_posizione = intero_indirizzo + intero_stringa
-                                    if intero_indirizzo + intero_stringa != indirizzo_finale:
-                                        not_in_range = False
+                                    not_in_range = False # Simulo istruzione la, non passo per la memoria
                                 elif intero_indirizzo + intero_stringa in diz_dati:
                                     seconda_posizione = intero_indirizzo + intero_stringa
-                                    if intero_indirizzo + intero_stringa != indirizzo_finale:
+                                    if intero_indirizzo + intero_stringa <= indirizzo_finale - 4: # -4 per evitare out of range in lw
                                         not_in_range = False
-                                elif not_in_range: # Simulo la memoria
+                                if not_in_range: # Simulo la memoria
                                     chiave = indirizzo_finale
                                     try:
                                         assert(intero_indirizzo + intero_stringa <= self.istruzioni.ultimo_valore_possibile), "Errore, il calcolo dell'indirizzo in memoria supera i limiti permessi (indirizzo 272629759 superato), riga: "+str(indice+1)+", "+self.diz_righe[indice+1]
                                     except AssertionError as messaggio_errore:
                                         print(messaggio_errore)
                                         sys.exit(1)
-                                    for _ in range(0, intero_indirizzo + intero_stringa - indirizzo_finale + 3): # +3 per evitare out of ranges nelle istruzioni
+                                    for _ in range(0, intero_indirizzo + intero_stringa - indirizzo_finale + 4): # +4 per evitare out of range in lw
                                         chiave += 1
                                         diz_dati[chiave] = 0
                                     seconda_posizione = intero_indirizzo + intero_stringa
