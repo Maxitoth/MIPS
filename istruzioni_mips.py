@@ -84,8 +84,10 @@ class Istruzioni:
         self.diz_indirizzi = {}
         self.diz_dati = {}
         self.ultimo_valore_possibile = 272629759
-        for key in range(268435456, 268500993): # dizionario con 65536 valori per simulare la memoria iniziale
+        for key in range(268435456, 268500993): # dizionario con 65536 valori per simulare la memoria iniziale (valori positivi)
             self.diz_dati[key] = 0
+        for key in range(1, 65537): # dizionario con 65536 valori per simulare la memoria iniziale (valori negativi)
+            self.diz_dati[-key] = 0
         self.diz_indirizzi_text = {}
         self.diz_text = {}
 
