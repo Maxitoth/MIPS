@@ -377,11 +377,7 @@ class Simulatore:
                     riga_modificata = riga_modificata.replace(stringa_spazio_tonda_chiusa, self.chiusa_tonda)
             riga_modificata = riga_modificata.split()
             if bool_dati_ascii:
-                for val in riga_modificata:
-                    if self.carattere_speciale in val:
-                        riga_corretta.append(val.replace(self.carattere_speciale, spazio))
-                    else:
-                        riga_corretta.append(val)
+                riga_corretta = [val.replace(self.carattere_speciale, spazio) if self.carattere_speciale in val else val for val in riga_modificata]
                         
             # I modi di scrivere istruzioni load o store portano a dover modificare la riga
             # Basti pensare a "la $a0, M + -1000 ($zero )" -> [la, $a0, M+-1000, ($zero)]
@@ -574,7 +570,7 @@ class Simulatore:
                 if self.bool_pipeline_if:
                     self.ciclo_di_clock = 0 # ho finito la ricerca
                 elif self.bool_pipeline_id:
-                    if istruzione_precedente in self.istruzioni_branch:
+                    if istruzione_precedente in self.istruzioni_branch: # Controllo caso particolare branch
                         riga_successiva_a_precedente = indice_riga_precedente+2
                         if riga_successiva_a_precedente in self.diz_righe:
                             for _ in self.diz_righe:
@@ -625,7 +621,7 @@ class Simulatore:
                         self.diz_hazards["IF"] = "bolla"
                     self.bool_pipeline_if = True
                 elif self.bool_pipeline_ex:
-                    if istruzione_precedente in self.istruzioni_branch and not bool_decode:
+                    if istruzione_precedente in self.istruzioni_branch and not bool_decode: # Controllo caso particolare branch analizzata in fase EX
                         jalr_trovata = False
                         riga_successiva_a_precedente = indice_riga_precedente+2
                         if riga_successiva_a_precedente in self.diz_righe:
@@ -683,7 +679,7 @@ class Simulatore:
             else:
                 if self.bool_pipeline_if:
                     self.ciclo_di_clock = 0 # ho finito la ricerca
-                elif self.bool_pipeline_id:
+                elif self.bool_pipeline_id: # Controllo caso particolare branch
                     if istruzione_precedente in self.istruzioni_branch:
                         riga_successiva_a_precedente = indice_riga_precedente+2
                         if riga_successiva_a_precedente in self.diz_righe:
@@ -699,7 +695,7 @@ class Simulatore:
                         self.diz_hazards["IF"] = "("+str(indice+1)+") "+riga
                     self.bool_pipeline_if = True
                 elif self.bool_pipeline_ex:
-                    if istruzione_precedente in self.istruzioni_branch and not bool_decode:
+                    if istruzione_precedente in self.istruzioni_branch and not bool_decode: # Controllo caso particolare branch analizzata in fase EX
                         jalr_trovata = False
                         riga_successiva_a_precedente = indice_riga_precedente+2
                         if riga_successiva_a_precedente in self.diz_righe:
@@ -750,9 +746,9 @@ class Simulatore:
         numero_hazards = stalli_registro+control_hazards
         totale_clocks += numero_hazards
         conta_clocks += numero_hazards
-        lista_valori_diz["Numero Bolle Data Hazard"] = stalli_registro # data hazards per quella istruzione
-        lista_valori_diz["Numero Bolle Control Hazard"] = control_hazards # control hazards per quella istruzione
-        lista_valori_diz["Valore Clock"] = totale_clocks # Valore clock per quella istruzione
+        lista_valori_diz["Numero Bolle Data Hazard"] = stalli_registro # stalli data hazards per quella istruzione
+        lista_valori_diz["Numero Bolle Control Hazard"] = control_hazards # stalli control hazards per quella istruzione
+        lista_valori_diz["Valore Clock"] = totale_clocks # Valore clock finale per quella istruzione
         return lista_valori_diz, data_hazards_totali, totale_clocks, conta_clocks, numero_hazards
     
     # Il metodo si occupa di mostrare il valore dell'hazard trovato e di dare un messaggio per i
@@ -789,16 +785,15 @@ class Simulatore:
     # Ogni parte di un loop di codice (tramite jump e branch) ha un numero di bolle dovute a data hazard e control hazard,
     # un insieme di istruzioni, cicli di clock di quella parte e il numero di volte in cui troviamo quella parte durante l'esecuzione
     # Se l'insieme di istruzioni trovate (righe) e il numero di cicli di clock trovati è lo stesso, allora abbiamo ritrovato la stessa parte di codice nel loop  
-    def calcola_clocks_per_parte_loops(self, conta_clocks: int,
-        indice: int):
-        for chiave in self.diz_loops:
+    def calcola_clocks_per_parte_loops(self, conta_clocks: int, indice: int):
+        for chiave in self.diz_loops: # Aggiungo cicli di clock e righe istruzioni per ogni loop trovato
             if self.diz_loops[chiave][1] == True:
                 self.diz_loops[chiave][2] += conta_clocks
                 self.diz_loops[chiave][4].add(indice+1) 
-        if self.reset_calcolo_loop:
-            if self.diz_loops[self.valore_loop][1] == True: 
+        if self.reset_calcolo_loop: # Aggiungo i valori trovati (l'iterazione del loop è terminata o il loop è cominciato)
+            if self.diz_loops[self.valore_loop][1] == True: # loop già cominciato, iterazione terminata
                 self.diz_loops[self.valore_loop][2] = self.diz_loops[self.valore_loop][2] - 1
-                lista_cercata = [self.diz_loops[self.valore_loop][2],self.diz_loops[self.valore_loop][4],1]
+                lista_cercata = [self.diz_loops[self.valore_loop][2],self.diz_loops[self.valore_loop][4],1] # [cicli di clock, insieme righe, numero di iterazioni (prima volta 1)] 
                 bool_lista_trovata = False
                 for indice_lista in range(0,len(self.diz_loops[self.valore_loop][3])):
                     if self.diz_loops[self.valore_loop][3][indice_lista][0] == lista_cercata[0] and self.diz_loops[self.valore_loop][3][indice_lista][1] == lista_cercata[1]: 
@@ -813,8 +808,8 @@ class Simulatore:
                 self.conta_control_hazards = 0 
                 self.conta_clocks = 1
                 self.diz_loops[self.valore_loop][2] = 1
-                self.diz_loops[self.valore_loop][4] = set()
-            else:
+                self.diz_loops[self.valore_loop][4] = set() # Reset dell'insieme di righe trovate
+            else: # loop appena trovato, comincia l'analisi
                 self.diz_loops[self.valore_loop][1] = True
                 self.aggiorna_pre_loop = True
                 self.conta_clocks = self.conta_clocks - 1 
@@ -862,6 +857,7 @@ class Simulatore:
             lista_indice = lista_indice[1:]
         # Controllo i casi jump e casi particolari come l'istruzione "jal" e "jalr"
         if lista_indice[0] in self.istruzioni_jump: # caso jump
+            # Analisi casi jump
             if lista_indice[0] == "jal":
                 for reg in self.insieme_registri:
                     if reg.nome == "$ra":
@@ -1004,6 +1000,8 @@ class Simulatore:
             valore_uno = lista_indice[1]
             istruzione = lista_indice[0]
         bool_branch = False
+        # Controllo che tipo di istruzione viene trovata e i registri in prima e seconda posizione 
+        # (da controllare perchè potrebbero causare data hazard, quindi stalli nella pipeline) 
         if istruzione in self.istruzioni_save:
             for reg in self.insieme_registri:
                 if primo_registro_da_controllare != "" and secondo_registro_da_controllare != "":
@@ -1044,11 +1042,7 @@ class Simulatore:
                     primo_registro_da_controllare = reg
                 if reg.nome == valore_tre or reg.nome_numerico == valore_tre:
                     secondo_registro_da_controllare = reg
-        #print(lista_indice)
-        #print(primo_registro_da_controllare)
-        #print(secondo_registro_da_controllare)
-        #print(registro_principale)
-        #print(indice+1)
+                    
         if primo_registro_da_controllare != "": # Potrebbe succedere che abbiamo add $s1, $zero, $s2
             # Nel caso del registro $zero o $0 questi registri non sono inizializzati prima
             # In generale anche se avessi prima l'istruzione add $zero, $zero, $s2 in $zero rimane lo zero
@@ -1090,7 +1084,7 @@ class Simulatore:
                         if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_registro and not (istruzione_precedente in self.istruzioni_jump and not bool_analizza_con_esecuzione):
                             tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_registro,indice+1,primo_registro_da_controllare.nome)
                             self.insieme_data_hazards.add(tupla_hazard_primo_registro)
-                if primo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch) :
+                if primo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch) : # Trova stalli per righe precedenti
                     if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_precedente:
                         if tupla_hazard_primo_registro != "":
                             tupla_hazard_aggiuntiva = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
@@ -1215,75 +1209,57 @@ class Simulatore:
         
         return lista_valori_diz, totale_clocks, data_hazards_totali, control_hazards_totali   
     
-    # Il metodo si occupa di creare registri, ovvero inizializzare i registri che sono effettivamente nel testo di codice.
+    # Il metodo si occupa di instanziare i registri, ovvero inizializzare i registri che sono effettivamente nel testo di codice.
     # Potrei crearli direttamente tutti, ma siccome potrebbero non essere usati preferisco questo approccio.
-    # Viene inoltre restituito il nome del registro dentro alle parentesi tonde (se non viene trovato si restituisce "")
+    # Viene inoltre restituito il nome del registro dentro alle parentesi tonde (se non viene trovato si restituisce la stringa vuota)
     
     def crea_registri(self, lista_riga: list):
-        self.dollaro = "$"
-        self.aperta_tonda = "("
-        self.chiusa_tonda = ")"
-        registro_non_trovato = True
+        registro_trovato = False
         nome_registro = ""
         nome_numerico = ""
         if len(lista_riga) == 3:
             if lista_riga[1].startswith(self.dollaro) and lista_riga[1][1] in self.iniziali_registri:
-                for reg in self.insieme_registri:
-                    if reg.nome == lista_riga[1] or reg.nome_numerico == lista_riga[1]:
-                        registro_non_trovato = False
-                        break
-                if registro_non_trovato:
+                registro_trovato = any(reg.nome == lista_riga[1] or reg.nome_numerico == lista_riga[1] for reg in self.insieme_registri)
+                if not registro_trovato:
                     if lista_riga[1][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[1]], 0, lista_riga[1])
-                        self.insieme_registri.add(nuovo_registro)
                     else:
                         for chiave in self.diz_numero_registri:
                             if self.diz_numero_registri[chiave] == lista_riga[1]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[1], 0, nome_numerico)
-                        self.insieme_registri.add(nuovo_registro)
                         nome_numerico = ""
+                    self.insieme_registri.add(nuovo_registro)
             if lista_riga[2].startswith(self.dollaro) and lista_riga[2][1] in self.iniziali_registri: # in posizione superiore a 1
-                # il registro è stato usato prima e quindi lo stato corretto è write back 
-                registro_non_trovato = True
-                for reg in self.insieme_registri:
-                    if reg.nome == lista_riga[2] or reg.nome_numerico == lista_riga[2]:
-                        registro_non_trovato = False
-                        break
-                if registro_non_trovato:
+                # il registro non è stato usato prima e quindi lo stato corretto è write back 
+                registro_trovato = any(reg.nome == lista_riga[2] or reg.nome_numerico == lista_riga[2] for reg in self.insieme_registri)
+                if not registro_trovato:
                     if lista_riga[2][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[2]], 0, lista_riga[2])
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
                     else:
                         for chiave in self.diz_numero_registri:
                             if self.diz_numero_registri[chiave] == lista_riga[2]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[2], 0, nome_numerico)
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
                         nome_numerico = ""
+                    nuovo_registro.write_back = True
+                    nuovo_registro.fetch = False
+                    nuovo_registro.stato_fase = 5
+                    self.insieme_registri.add(nuovo_registro)
             elif self.aperta_tonda in lista_riga[2]:
+                registro_trovato = False
                 nome_registro = lista_riga[2][lista_riga[2].index(self.aperta_tonda)+1: lista_riga[2].index(self.chiusa_tonda)]
                 for reg in self.insieme_registri:
                     if reg.nome == nome_registro or reg.nome_numerico == nome_registro:
-                        registro_non_trovato = False
+                        registro_trovato = True
                         if reg.nome_numerico == nome_registro:
                             nome_registro = reg.nome # Voglio che sia il nome del registro (non valore numerico)
                         break
-                if registro_non_trovato:
+                if not registro_trovato:
                     if nome_registro[1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[nome_registro], 0, nome_registro)
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
                         nome_registro = self.diz_numero_registri[nome_registro]
                     else:
                         for chiave in self.diz_numero_registri:
@@ -1291,80 +1267,60 @@ class Simulatore:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(nome_registro, 0, nome_numerico)
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
-                        nome_numerico = ""       
+                        nome_numerico = ""
+                    nuovo_registro.write_back = True
+                    nuovo_registro.fetch = False
+                    nuovo_registro.stato_fase = 5
+                    self.insieme_registri.add(nuovo_registro)       
         if len(lista_riga) == 4: # al massimo ci sono 4 posizioni --> add $t1, $t2, $t3
             if lista_riga[1].startswith(self.dollaro) and lista_riga[1][1] in self.iniziali_registri:
-                for reg in self.insieme_registri:
-                    if reg.nome == lista_riga[1] or reg.nome_numerico == lista_riga[1]:
-                        registro_non_trovato = False
-                        break
-                if registro_non_trovato:
+                registro_trovato = any(reg.nome == lista_riga[1] or reg.nome_numerico == lista_riga[1] for reg in self.insieme_registri)
+                if not registro_trovato:
                     if lista_riga[1][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[1]], 0, lista_riga[1])
-                        self.insieme_registri.add(nuovo_registro)
                     else:
                         for chiave in self.diz_numero_registri:
                             if self.diz_numero_registri[chiave] == lista_riga[1]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[1], 0, nome_numerico)
-                        self.insieme_registri.add(nuovo_registro)
                         nome_numerico = ""
+                    self.insieme_registri.add(nuovo_registro)
             if lista_riga[2].startswith(self.dollaro) and lista_riga[2][1] in self.iniziali_registri: # in posizione superiore a 1
-                # il registro è stato usato prima e quindi lo stato corretto è write back 
-                registro_non_trovato = True
-                for reg in self.insieme_registri:
-                    if reg.nome == lista_riga[2] or reg.nome_numerico == lista_riga[2]:
-                        registro_non_trovato = False
-                        break
-                if registro_non_trovato:
+                # il registro non è stato usato prima e quindi lo stato corretto è write back 
+                registro_trovato = any(reg.nome == lista_riga[2] or reg.nome_numerico == lista_riga[2] for reg in self.insieme_registri)
+                if not registro_trovato:
                     if lista_riga[2][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[2]], 0, lista_riga[2])
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
                     else:
                         for chiave in self.diz_numero_registri:
                             if self.diz_numero_registri[chiave] == lista_riga[2]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[2], 0, nome_numerico)
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
                         nome_numerico = ""
+                    nuovo_registro.write_back = True
+                    nuovo_registro.fetch = False
+                    nuovo_registro.stato_fase = 5
+                    self.insieme_registri.add(nuovo_registro)
             if lista_riga[3].startswith(self.dollaro) and lista_riga[3][1] in self.iniziali_registri: # in posizione superiore a 1
                 # il registro è stato usato prima e quindi lo stato corretto è write back 
-                registro_non_trovato = True
-                for reg in self.insieme_registri:
-                    if reg.nome == lista_riga[3] or reg.nome_numerico == lista_riga[3]:
-                        registro_non_trovato = False
-                        break
-                if registro_non_trovato:
+                registro_trovato = any(reg.nome == lista_riga[3] or reg.nome_numerico == lista_riga[3] for reg in self.insieme_registri)
+                if not registro_trovato:
                     if lista_riga[3][1] in self.iniziali_registri_numerici: 
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[3]], 0, lista_riga[3])
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
                     else:
                         for chiave in self.diz_numero_registri:
                             if self.diz_numero_registri[chiave] == lista_riga[3]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[3], 0, nome_numerico)
-                        nuovo_registro.write_back = True
-                        nuovo_registro.fetch = False
-                        nuovo_registro.stato_fase = 5
-                        self.insieme_registri.add(nuovo_registro)
                         nome_numerico = "" 
-            return nome_registro    
+                    nuovo_registro.write_back = True
+                    nuovo_registro.fetch = False
+                    nuovo_registro.stato_fase = 5
+                    self.insieme_registri.add(nuovo_registro)
+        return nome_registro    
         
     # Il metodo si occupa di passare i valori dei caratteri delle stringhe ascii nel dizionario che simula la memoria
     # Sono stati valutati certi caratteri speciali (esempio '\n' o \t' ecc....) che non venivano letti correttamente
