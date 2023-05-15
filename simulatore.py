@@ -1,14 +1,14 @@
 # Considerazioni riguardo alla traduzione da mips a python
 
 # Sconsiglio vivamente l'utilizzo del registro $at in quanto non è gestito in maniera corretta
-# Il suo valore è sempre il valore dell'indirizzo dopo istruzioni load in cui è presente il nome del vettore
+# Il suo valore è sempre il valore dell'indirizzo dopo istruzioni load in cui è presente il nome della struttura dati
 # Esempio : lb $s0, M($a1) ---> $at = 0x1001000
 # Esempio : lb $s0, ($a1) ---> $at non cambia
 # In alcuni contesti il valore di $at non dovrebbe essere cambiato. 
-# Puo essere usato, ma non è garantita una terminazione corretta del codice.
+# Puo essere usato in input del testo, ma non è garantita una terminazione corretta del codice.
 
 # Il tipo float o altri non sono gestiti
-# Mancano ancora molte istruzioni
+# Non sono presenti tutte le istruzioni (usate quelle trovate in self.insieme_istruzioni)
 
 # in ogni riga del testo deve esserci alself.meno uno spazio o una virgola tra ogni valore altrimenti il testo non
 # puo essere letto correttamente
@@ -44,8 +44,11 @@
 
 # Vengono trovati tutti i possibili control hazard (che siano dovuti all'esecuzione del codice o meno)
 
-# le lw e le lh (anche per sw e sh) funzionano anche accedendo a valori di indirizzi in memoria dispari (è scorretto e andrebbe testato il codice prima su MARS (sarebbe presente un errore) per verificare che gli indirizzi in cui si accede siano sempre pari 
+# Le lw e le lh (anche per sw e sh) funzionano anche accedendo a valori di indirizzi in memoria dispari (è scorretto e andrebbe testato il codice prima su MARS (sarebbe presente un errore) per verificare che gli indirizzi in cui si accede siano sempre pari 
 # oppure aggiungere una exception nei quattro metodi (sh, sw, lh, lw))
+
+# Da non scrivere altri indirizzi di partenza, usate quelli di default: Non inserite ".text 4194308" o ".data 268500996"
+# Lasciate solo ".data" e ".text". Partire da indirizzi di partenza diversi non è gestito.
 
 
 import registro
@@ -89,6 +92,7 @@ def chiama_istruzioni_mips(oggetto_classe_istruzioni, nome_istruzione, prima_pos
             metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
             tupla_valori = prima_posizione, seconda_posizione
             return metodo(tupla_valori)
+        # Caso standard
         metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
         if seconda_posizione == "" and terza_posizione == "":
             return metodo(prima_posizione)
@@ -198,8 +202,7 @@ def rappresenta_pipeline(diz_righe, riga_iniziale, riga_finale, lista_pipeline, 
     # Inserisco le posizioni da mostrare nella rappresentazione
     for chiave in diz_rappresentazione:
         if type(chiave) == int:
-            for _ in diz_rappresentazione[chiave_riga]:
-                diz_rappresentazione[chiave].append(stringa_rappresentazione_vuota)
+            diz_rappresentazione[chiave] = [stringa_rappresentazione_vuota for _ in diz_rappresentazione[chiave_riga]]
                 
                 
     # Inserisco infine la stringa pipeline nelle posizioni corrette          
@@ -245,7 +248,7 @@ class Simulatore:
         self.istruzioni_jump = {"j","jal","jalr"}
         self.iniziali_registri = {'a','s','t','v','r','k','1','2','3','4','5','6','7','8','9'} # Iniziali dei possibili registri (ho escluso la f che servirebbe per i floating point registers)
         self.iniziali_registri_numerici = {'1','2','3','4','5','6','7','8','9'} # per segnare registri numerici come $1
-        # diz_numero_registri serve per inizializzare i valori numerici ai corrispettivi registri
+        # diz_numero_registri serve per assegnare i valori numerici ai corrispettivi registri
         self.diz_numero_registri = {"$1": "$at", "$2": "$v0", "$3": "$v1", "$4": "$a0", "$5": "$a1","$6": "$a2","$7": "$a3","$8": "$t0","$9": "$t1","$10": "$t2","$11": "$t3","$12": "$t4","$13": "$t5","$14": "$t6","$15": "$t7","$16": "$s0","$17": "$s1","$18": "$s2","$19": "$s3","$20": "$s4","$21": "$s5","$22": "$s6","$23": "$s7", "$24": "$t8","$25": "$t9","$26": "$k0","$27": "$k1","$28": "$gp","$29": "$sp","$30": "$fp","$31": "$ra"}
         self.insieme_registri = set() # L'insieme che conterrà tutti i registri inizializzati
         self.diz_salti = {} # Per controllare a che indice saltare
@@ -414,7 +417,7 @@ class Simulatore:
         indice_riga_pre_precedente = -1
         indice_riga_precedente = -1
         nome_at = "$at"
-        registro_at = registro.Registro(nome_at, 0, "$1") # creo $at
+        registro_at = registro.Registro(nome_at, 0, "$1") # instanzio $at
         registro_at.write_back = True
         registro_at.fetch = False
         registro_at.stato_fase = 5
@@ -493,7 +496,7 @@ class Simulatore:
                 if istruzione in self.program_counter.insieme_istruzioni_semplici:
                     break
                 # Da qui comincia l'analisi dell'input per simulare il numero di pseudo-istruzioni generate, quindi
-                # un corretto valore del program counter
+                # un corretto valore del program counter e indirizzi del text
                 if self.istruzioni.bool_program_counter: # Da farsi solo se richiesto
                     if self.aperta_tonda in ultimo_elemento:
                         skip = True
@@ -541,7 +544,6 @@ class Simulatore:
         diz_indirizzi_text[indirizzo_text] = ""
         self.istruzioni.pc_finale = indirizzo_text 
         self.istruzioni.diz_indirizzi_text = self.program_counter.diz_indirizzi_text
-        #print(diz_text)
         
     # Il metodo si occupa di trovare le istruzioni o le bolle nelle varie fasi della pipeline (IF, ID, EX, MEM e WB)
     # in un determinato ciclo di clock
@@ -551,13 +553,13 @@ class Simulatore:
                 self.bool_clock_trovato = True
                 self.diz_hazards["WB"] = "("+str(indice+1)+") "+riga
                 self.bool_pipeline_wb = True
-            elif self.ciclo_di_clock == totale_clocks - 1:
+            elif self.ciclo_di_clock == totale_clocks - 1: # è presente uno stallo
                 self.bool_clock_trovato = True
                 self.diz_hazards["WB"] = "bolla"
                 self.bool_pipeline_wb = True
                 self.diz_hazards["MEM"] = "("+str(indice+1)+") "+riga
                 self.bool_pipeline_mem = True
-            elif self.ciclo_di_clock == totale_clocks - 2:
+            elif self.ciclo_di_clock == totale_clocks - 2: # sono presenti due stalli
                 self.bool_clock_trovato = True
                 self.diz_hazards["WB"] = "bolla"
                 self.bool_pipeline_wb = True
@@ -815,6 +817,33 @@ class Simulatore:
                 self.conta_clocks = self.conta_clocks - 1 
                 self.diz_loops[self.valore_loop][2] = 1  
                 self.diz_loops[self.valore_loop][4].add(indice+1)
+      
+    # Il metodo si occupa di trovare i data hazard tra la riga attuale analizzata e le righe precedenti in cui 
+    # è presente il registro coinvolto nell'istruzione attuale            
+    def trova_data_hazard(self, indice: int, lista_indice: list, istruzione_precedente: str, bool_saltato: bool, registro_da_controllare: registro.Registro, indice_riga_precedente: int, indice_riga_pre_precedente: int, bool_decode: bool, bool_analizza_con_esecuzione: bool):
+        tupla_hazard = ""
+        # Se l'istruzione precedente è di tipo branch e il salto si è fatto, allora
+        # so che nella pipeline è presente almeno un control hazard e ancora prima l'istruzione branch. Le istruzioni branch analizzate
+        # non cambiano i valori dei registri quindi non si verificano data hazard.
+        if not (istruzione_precedente in self.istruzioni_branch and bool_saltato): # Escludo questo caso.
+            if registro_da_controllare.istruzione_mips != "": # Trova dove sono gli stalli (riga a riga con registro)
+                if indice_riga_precedente+1 == registro_da_controllare.riga_registro: # Cerca stalli causati da istruzione precedente
+                    tupla_hazard = (registro_da_controllare.riga_registro,indice+1,registro_da_controllare.nome)
+                    self.insieme_data_hazards.add(tupla_hazard)
+                elif (lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch: # Caso standard con riga pre-precedente o con branch che decide il salto in fase di ID
+                    # Evito di trovare stalli con jump se sto facendo l'analisi del testo in "trova_indirizzi_text" 
+                    if indice_riga_pre_precedente+1 == registro_da_controllare.riga_registro and not (istruzione_precedente in self.istruzioni_jump and not bool_analizza_con_esecuzione): # Cerca stalli causati da istruzione pre-precedente
+                        tupla_hazard = (registro_da_controllare.riga_registro,indice+1,registro_da_controllare.nome)
+                        self.insieme_data_hazards.add(tupla_hazard)
+            if registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch) :
+                if indice_riga_pre_precedente+1 == registro_da_controllare.riga_precedente: # Cerca stalli causati da istruzione pre-precedente
+                    if tupla_hazard != "": # nuovo data hazard trovato, ma non è quello trovato durante l'esecuzione 
+                        tupla_hazard_aggiuntiva = (registro_da_controllare.riga_precedente,indice+1,registro_da_controllare.nome)
+                        self.insieme_data_hazards.add(tupla_hazard_aggiuntiva)
+                    else:
+                        tupla_hazard = (registro_da_controllare.riga_precedente,indice+1,registro_da_controllare.nome)
+                        self.insieme_data_hazards.add(tupla_hazard)
+        return tupla_hazard
         
         # Il metodo si occupa di trovare data hazards, control hazards e mostrare come si comporta la pipeline (dizionario che viene usato per generare vari json file).
         # è influenzato da vari booleani precedentemente stabiliti ( forwarding o self.meno, ecc...)
@@ -853,6 +882,7 @@ class Simulatore:
         lista_valori_diz["Riga"] = indice+1 # valore riga del codice mips
         lista_valori_diz["Program Counter"] = program_counter # valore program counter ( corretto solo se program counter abilitato)
         lista_valori_diz["Istruzione Mips"] = riga # codice mips in quella riga
+        bool_branch = False
         if lista_indice[0] not in self.insieme_istruzioni:
             lista_indice = lista_indice[1:]
         # Controllo i casi jump e casi particolari come l'istruzione "jal" e "jalr"
@@ -900,23 +930,9 @@ class Simulatore:
                                 stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 2 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding
                             if stalli_primo_registro_forwarding < 0:
                                 stalli_primo_registro_forwarding = 0
-                    if not (istruzione_precedente in self.istruzioni_branch and bool_saltato):
-                        if primo_registro_da_controllare.istruzione_mips != "": # Trova dove sono gli stalli( riga a riga con registro)
-                            if indice_riga_precedente+1 == primo_registro_da_controllare.riga_registro:
-                                tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_registro,indice+1,primo_registro_da_controllare.nome)
-                                self.insieme_data_hazards.add(tupla_hazard_primo_registro)
-                            elif (lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch:
-                                if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_registro and not (istruzione_precedente in self.istruzioni_jump and not bool_analizza_con_esecuzione):
-                                    tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_registro,indice+1,primo_registro_da_controllare.nome)
-                                    self.insieme_data_hazards.add(tupla_hazard_primo_registro)
-                        if primo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch):
-                            if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_precedente:
-                                if tupla_hazard_primo_registro != "":
-                                    tupla_hazard_aggiuntiva = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
-                                    self.insieme_data_hazards.add(tupla_hazard_aggiuntiva)
-                                else:
-                                    tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
-                                    self.insieme_data_hazards.add(tupla_hazard_primo_registro)
+                                    
+                    tupla_hazard_primo_registro = Simulatore.trova_data_hazard(self, indice, lista_indice, istruzione_precedente, bool_saltato, primo_registro_da_controllare, indice_riga_precedente, indice_riga_pre_precedente, bool_decode, bool_analizza_con_esecuzione)
+                        
                     for reg in self.insieme_registri:
                         if not bool_forwarding:
                             if stalli_primo_registro_not_forwarding > 0:
@@ -932,7 +948,7 @@ class Simulatore:
                                 break
                 if jalr_len_due:
                     for reg in self.insieme_registri:
-                        if reg.nome == "$ra": # reset
+                        if reg.nome == "$ra": # reset registro
                             reg.decode = True
                             reg.execute = False
                             reg.memory = False
@@ -940,12 +956,12 @@ class Simulatore:
                             if reg.istruzione_mips != "":
                                 reg.istruzione_precedente = reg.istruzione_mips
                                 reg.riga_precedente = reg.riga_registro
-                            reg.istruzione_mips = lista_indice[0] # Passa per la memoria?
+                            reg.istruzione_mips = lista_indice[0]
                             reg.riga_registro = indice+1
                             break
                 else:
                     for reg in self.insieme_registri:
-                        if reg.nome == lista_indice[1]: # reset
+                        if reg.nome == lista_indice[1]: # reset registro
                             reg.decode = True
                             reg.execute = False
                             reg.memory = False
@@ -953,7 +969,7 @@ class Simulatore:
                             if reg.istruzione_mips != "":
                                 reg.istruzione_precedente = reg.istruzione_mips
                                 reg.riga_precedente = reg.riga_registro
-                            reg.istruzione_mips = lista_indice[0] # Passa per la memoria?
+                            reg.istruzione_mips = lista_indice[0]
                             reg.riga_registro = indice+1
                             break
             if not bool_forwarding:
@@ -999,7 +1015,6 @@ class Simulatore:
         if len(lista_indice) == 2:
             valore_uno = lista_indice[1]
             istruzione = lista_indice[0]
-        bool_branch = False
         # Controllo che tipo di istruzione viene trovata e i registri in prima e seconda posizione 
         # (da controllare perchè potrebbero causare data hazard, quindi stalli nella pipeline) 
         if istruzione in self.istruzioni_save:
@@ -1075,23 +1090,8 @@ class Simulatore:
                         stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 2 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding
                     if stalli_primo_registro_forwarding < 0:
                         stalli_primo_registro_forwarding = 0
-            if not (istruzione_precedente in self.istruzioni_branch and bool_saltato):
-                if primo_registro_da_controllare.istruzione_mips != "": # Trova dove sono gli stalli( riga a riga con registro)
-                    if indice_riga_precedente+1 == primo_registro_da_controllare.riga_registro:
-                        tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_registro,indice+1,primo_registro_da_controllare.nome)
-                        self.insieme_data_hazards.add(tupla_hazard_primo_registro)
-                    elif (lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch:
-                        if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_registro and not (istruzione_precedente in self.istruzioni_jump and not bool_analizza_con_esecuzione):
-                            tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_registro,indice+1,primo_registro_da_controllare.nome)
-                            self.insieme_data_hazards.add(tupla_hazard_primo_registro)
-                if primo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch) : # Trova stalli per righe precedenti
-                    if indice_riga_pre_precedente+1 == primo_registro_da_controllare.riga_precedente:
-                        if tupla_hazard_primo_registro != "":
-                            tupla_hazard_aggiuntiva = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
-                            self.insieme_data_hazards.add(tupla_hazard_aggiuntiva)
-                        else:
-                            tupla_hazard_primo_registro = (primo_registro_da_controllare.riga_precedente,indice+1,primo_registro_da_controllare.nome)
-                            self.insieme_data_hazards.add(tupla_hazard_primo_registro)
+    
+            tupla_hazard_primo_registro = Simulatore.trova_data_hazard(self, indice, lista_indice, istruzione_precedente, bool_saltato, primo_registro_da_controllare, indice_riga_precedente, indice_riga_pre_precedente, bool_decode, bool_analizza_con_esecuzione)
                         
                         
         if secondo_registro_da_controllare != "": # Potrebbe succedere che abbiamo add $s1, $zero, $s2
@@ -1120,23 +1120,9 @@ class Simulatore:
                         stalli_secondo_registro_forwarding = secondo_registro_da_controllare.stato_write_back - 2 - secondo_registro_da_controllare.stato_fase - intero_stato_forwarding
                     if stalli_secondo_registro_forwarding < 0:
                         stalli_secondo_registro_forwarding = 0
-            if not (istruzione_precedente in self.istruzioni_branch and bool_saltato):
-                if secondo_registro_da_controllare.istruzione_mips != "": # Trova dove sono gli stalli( riga a riga con registro)
-                    if indice_riga_precedente+1 == secondo_registro_da_controllare.riga_registro:
-                        tupla_hazard_secondo_registro = (secondo_registro_da_controllare.riga_registro,indice+1,secondo_registro_da_controllare.nome)
-                        self.insieme_data_hazards.add(tupla_hazard_secondo_registro)
-                    elif (lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch:
-                        if indice_riga_pre_precedente+1 == secondo_registro_da_controllare.riga_registro and not (istruzione_precedente in self.istruzioni_jump and not bool_analizza_con_esecuzione):
-                            tupla_hazard_secondo_registro = (secondo_registro_da_controllare.riga_registro,indice+1,secondo_registro_da_controllare.nome)
-                            self.insieme_data_hazards.add(tupla_hazard_secondo_registro)
-                if secondo_registro_da_controllare.istruzione_precedente != "" and ((lista_indice[0] in self.istruzioni_branch and bool_decode) or not lista_indice[0] in self.istruzioni_branch) :
-                    if indice_riga_pre_precedente+1 == secondo_registro_da_controllare.riga_precedente:
-                        if tupla_hazard_secondo_registro != "":
-                            tupla_hazard_aggiuntiva = (secondo_registro_da_controllare.riga_precedente,indice+1,secondo_registro_da_controllare.nome)
-                            self.insieme_data_hazards.add(tupla_hazard_aggiuntiva)
-                        else:
-                            tupla_hazard_secondo_registro = (secondo_registro_da_controllare.riga_precedente,indice+1,secondo_registro_da_controllare.nome)
-                            self.insieme_data_hazards.add(tupla_hazard_secondo_registro)
+                        
+            tupla_hazard_secondo_registro = Simulatore.trova_data_hazard(self, indice, lista_indice, istruzione_precedente, bool_saltato, secondo_registro_da_controllare, indice_riga_precedente, indice_riga_pre_precedente, bool_decode, bool_analizza_con_esecuzione)
+            
         if not bool_forwarding:
             if stalli_primo_registro_not_forwarding >= stalli_secondo_registro_not_forwarding:
                 lista_valori_diz, data_hazards_totali, totale_clocks, conta_clocks, numero_hazards = Simulatore.aggiorna_valori_pipeline(self, lista_valori_diz, control_hazards, stalli_primo_registro_not_forwarding, data_hazards_totali, totale_clocks, conta_clocks)
