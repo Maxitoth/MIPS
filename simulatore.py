@@ -50,56 +50,54 @@
 # Da non scrivere altri indirizzi di partenza, usate quelli di default: Non inserite ".text 4194308" o ".data 268500996"
 # Lasciate solo ".data" e ".text". Partire da indirizzi di partenza diversi non è gestito.
 
-
+import sys
+import pandas as pd
 import registro
 import istruzioni_mips
 import program_counter
-import pandas as pd
-import sys
 
 
 # Il metodo si occupa di chiamare il metodo della classe Istruzioni associato al nome relativo a nome_istruzione.
 
 def chiama_istruzioni_mips(oggetto_classe_istruzioni, nome_istruzione, prima_posizione, seconda_posizione, terza_posizione):
 
-        # le funzioni non possono chiamarsi and e or
-        stringa_and = "and"
-        stringa_andi = "andi"
-        stringa_ori = "ori"
-        stringa_or = "or"
-        stringa_xor = "xor"
-        stringa_xori = "xori"
-        stringa_jalr = "jalr" 
-        # servirebbe un insieme per istruzioni con piu input come la jalr e cosi ogni istruizione con piu
-        # input la metto nel caso jalr
-        # and, or, xor fanno due istruzioni (and, andi, or, ori, xor, xori)
-        if nome_istruzione == stringa_and or nome_istruzione == stringa_andi: 
-            nome_istruzione = "aand"
-            metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
-            tupla_valori = prima_posizione, seconda_posizione, terza_posizione
-            return metodo(tupla_valori)
-        if nome_istruzione == stringa_or or nome_istruzione == stringa_ori:
-            nome_istruzione = "oor"
-            metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
-            tupla_valori = prima_posizione, seconda_posizione, terza_posizione
-            return metodo(tupla_valori)
-        if nome_istruzione == stringa_xor or nome_istruzione == stringa_xori:
-            nome_istruzione = "xor"
-            metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
-            tupla_valori = prima_posizione, seconda_posizione, terza_posizione
-            return metodo(tupla_valori)
-        if nome_istruzione == stringa_jalr:
-            metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
-            tupla_valori = prima_posizione, seconda_posizione
-            return metodo(tupla_valori)
-        # Caso standard
+    # le funzioni non possono chiamarsi and e or
+    stringa_and = "and"
+    stringa_andi = "andi"
+    stringa_ori = "ori"
+    stringa_or = "or"
+    stringa_xor = "xor"
+    stringa_xori = "xori"
+    stringa_jalr = "jalr" 
+    # servirebbe un insieme per istruzioni con piu input come la jalr e cosi ogni istruizione con piu
+    # input la metto nel caso jalr
+    # and, or, xor fanno due istruzioni (and, andi, or, ori, xor, xori)
+    if nome_istruzione in (stringa_and, stringa_andi): 
+        nome_istruzione = "aand"
         metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
-        if seconda_posizione == "" and terza_posizione == "":
-            return metodo(prima_posizione)
-        elif terza_posizione == "":
-            return metodo(prima_posizione, seconda_posizione)
-        else:    
-            return metodo(prima_posizione, seconda_posizione, terza_posizione) 
+        tupla_valori = prima_posizione, seconda_posizione, terza_posizione
+        return metodo(tupla_valori)
+    if nome_istruzione in (stringa_or, stringa_ori):
+        nome_istruzione = "oor"
+        metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
+        tupla_valori = prima_posizione, seconda_posizione, terza_posizione
+        return metodo(tupla_valori)
+    if nome_istruzione in (stringa_xor, stringa_xori):
+        nome_istruzione = "xor"
+        metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
+        tupla_valori = prima_posizione, seconda_posizione, terza_posizione
+        return metodo(tupla_valori)
+    if nome_istruzione == stringa_jalr:
+        metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
+        tupla_valori = prima_posizione, seconda_posizione
+        return metodo(tupla_valori)
+    # Caso standard
+    metodo = getattr(oggetto_classe_istruzioni, nome_istruzione)
+    if seconda_posizione == "" and terza_posizione == "":
+        return metodo(prima_posizione)
+    if terza_posizione == "":
+        return metodo(prima_posizione, seconda_posizione)   
+    return metodo(prima_posizione, seconda_posizione, terza_posizione) 
         
 # Il metodo si occupa di generare un file excel con due o quattro fogli
 # Se i booleani sono a False il metodo non fa nulla 
@@ -192,16 +190,16 @@ def rappresenta_pipeline(diz_righe, riga_iniziale, riga_finale, lista_pipeline, 
         diz_rappresentazione[intero] = []
         
     # Inserisco le righe nel dizionario per la giusta visualizzazione dei dati in excel e json
-    for riga in diz_righe:
-        if riga >= riga_iniziale and diz_righe[riga] != "" and not diz_righe[riga].startswith('#'):
+    for riga, valore_diz in diz_righe.items():
+        if riga >= riga_iniziale and valore_diz != "" and not valore_diz.startswith('#'):
             diz_rappresentazione[chiave_riga].append(int(riga))
-            diz_rappresentazione[chiave_istruzione].append(diz_righe[riga])
+            diz_rappresentazione[chiave_istruzione].append(valore_diz)
             if riga == riga_finale:
                 break
     
     # Inserisco le posizioni da mostrare nella rappresentazione
     for chiave in diz_rappresentazione:
-        if type(chiave) == int:
+        if isinstance(chiave, int):
             diz_rappresentazione[chiave] = [stringa_rappresentazione_vuota for _ in diz_rappresentazione[chiave_riga]]
                 
                 
@@ -220,8 +218,7 @@ def rappresenta_pipeline(diz_righe, riga_iniziale, riga_finale, lista_pipeline, 
         for intero_riga in diz_rappresentazione[chiave_riga]:
             if intero_riga == numero_riga:
                 break
-            else:
-                posizione_riga += 1
+            posizione_riga += 1
         for _ in stringa_pipeline:
             diz_rappresentazione[posizione_valori_pipeline+indice_stringa_pipeline][posizione_riga] = stringa_pipeline[indice_stringa_pipeline]
             indice_stringa_pipeline += 1
@@ -323,21 +320,18 @@ class Simulatore:
         riga_corretta = []
         # Analizzo riga per riga, rimpiazzo doppi spazi, virgole, due punti
         # e altri casi particolari possibilmente trovati in input 
-        for riga in range(0,len(self.righe)): 
-            riga_modificata = self.righe[riga].strip()
-            self.diz_righe[numero_riga] = riga_modificata
+        for riga, istruzione in enumerate(self.righe, 1): 
+            riga_modificata = istruzione.strip()
+            self.diz_righe[riga] = riga_modificata
             if riga_modificata.startswith(self.data):
                 bool_stringhe_data = True
             if riga_modificata.startswith(self.text):
                 bool_stringhe_data = False
             if virgolette in riga_modificata and bool_stringhe_data: # Trovata stringa ascii
-                # Analizzo la stringa ascii e costruisco la riga ascii corretta (se ho S: .ascii "stringa " " trovata" --> stringaµ µtrovata --> ['S','.ascii', 'stringa ', ' trovata'])
+                # Analizzo la stringa ascii e trovo la riga ascii corretta (se ho S: .ascii "stringa " " trovata" --> stringaµ µtrovata --> ['S','.ascii', 'stringa ', ' trovata'])
                 for carattere in riga_modificata: 
                     if carattere == virgolette:
-                        if bool_virgolette == False:
-                            bool_virgolette = True
-                        else:
-                            bool_virgolette = False
+                        bool_virgolette = not bool(bool_virgolette)
                     if carattere == spazio and bool_virgolette:
                         riga_ascii += self.carattere_speciale
                     elif carattere == due_punti and not bool_virgolette:
@@ -386,23 +380,34 @@ class Simulatore:
             # Basti pensare a "la $a0, M + -1000 ($zero )" -> [la, $a0, M+-1000, ($zero)]
             # è possibile scrivere anche in quel modo e in molti altri.
             # Dopo questa parte ottengo [la, $a0, M+-1000($zero)], ossia la giusta rappresentazione
-            if len(riga_modificata) == 4 and not bool_stringhe_data: # Per casi particolari con istruzioni load e store 
+            if len(riga_modificata) == 4 and not bool_stringhe_data: # Per caso particolare 
                 if riga_modificata[0] in self.istruzioni_load or riga_modificata[0] in self.istruzioni_save:
                     riga_modificata[-1] = riga_modificata[-2] + riga_modificata[-1]
                     riga_modificata.pop(-2)
-            if len(riga_modificata) == 5 and not bool_stringhe_data: # Per caso particolare
+            elif len(riga_modificata) == 5 and not bool_stringhe_data: # Per caso particolare (con nome di testo)
                 if riga_modificata[1] in self.istruzioni_load or riga_modificata[1] in self.istruzioni_save:
                     riga_modificata[-1] = riga_modificata[-2] + riga_modificata[-1]
-                    riga_modificata.pop(-2)   
+                    riga_modificata.pop(-2)  
+            elif len(riga_modificata) == 3 and not bool_stringhe_data: # Per caso particolare (con nome di testo)
+                if riga_modificata[1] in self.istruzioni_load or riga_modificata[1] in self.istruzioni_save:
+                    lista_stringa_corretta = riga_modificata[-1].split(self.piu)
+                    riga_modificata.pop(-1) 
+                    riga_modificata.append(lista_stringa_corretta[0])
+                    riga_modificata.append(lista_stringa_corretta[1])
+            elif len(riga_modificata) == 2 and not bool_stringhe_data: # Per caso particolare
+                if riga_modificata[0] in self.istruzioni_load or riga_modificata[0] in self.istruzioni_save:
+                    lista_stringa_corretta = riga_modificata[-1].split(self.piu)
+                    riga_modificata.pop(-1) 
+                    riga_modificata.append(lista_stringa_corretta[0])
+                    riga_modificata.append(lista_stringa_corretta[1]) 
             numero_riga += 1
             if bool_dati_ascii:
-               self.testo_modificato.append(riga_corretta)
-               bool_dati_ascii = False 
-               riga_corretta = []
+                self.testo_modificato.append(riga_corretta)
+                bool_dati_ascii = False 
+                riga_corretta = []
             else:
                 self.testo_modificato.append(riga_modificata)
         testo.close()
-        return
     
     # Il metodo si occupa di trovare gli indirizzi legati al .text in mars usando due dizionari
     # I dati trovati servono a simulare il program counter.
@@ -431,8 +436,7 @@ class Simulatore:
         indice_lista = 0
         istruzione = ""
         istruzione_precedente = ""
-        for indice in range(0,len(self.testo_modificato)):
-            lista = self.testo_modificato[indice]
+        for indice, lista in enumerate(self.testo_modificato):
             for elem in lista:
                 if lista[0].startswith(self.punto):
                     break
@@ -504,12 +508,14 @@ class Simulatore:
                             ultimo_elemento = ultimo_elemento[1:]
                         if self.piu in ultimo_elemento:
                             valore = self.program_counter.range_sessanta + 1 # vado oltre il range
+                            if self.aperta_tonda in ultimo_elemento: # Per caso W+100($a0)
+                                valore_con_tonda_trovato = True
                         elif ultimo_elemento[0] != self.aperta_tonda:
                             valore_con_tonda_trovato = True
                             valore = ultimo_elemento[0:ultimo_elemento.index(self.aperta_tonda)]
                             if valore.isdigit() or valore.startswith(self.zero_x) or valore.startswith(self.meno_zero_x) or valore.startswith(self.meno):
                                 if valore.startswith(self.zero_x) or valore.startswith(self.meno_zero_x):
-                                        valore = istruzioni_mips.toint(int(valore,16))
+                                    valore = istruzioni_mips.toint(int(valore,16))
                                 else:
                                     valore = int(valore)
                             elif not valore.startswith(self.carattere_virgoletta):
@@ -528,7 +534,7 @@ class Simulatore:
                     elif istruzione in self.program_counter.insieme_save_load or istruzione == self.program_counter.istruzione_la:
                         valore = self.program_counter.range_sessanta + 1 # vado oltre il range
                         skip = True
-                    if not skip:
+                    if not skip: # Per branch
                         if penultimo_elemento.startswith(self.piu): # Se scrivo +60 lo leggo come intero positivo
                             penultimo_elemento = penultimo_elemento[1:]
                         if penultimo_elemento.isdigit() or penultimo_elemento.startswith(self.zero_x) or penultimo_elemento.startswith(self.meno_zero_x) or penultimo_elemento.startswith(self.meno):
@@ -788,12 +794,12 @@ class Simulatore:
     # un insieme di istruzioni, cicli di clock di quella parte e il numero di volte in cui troviamo quella parte durante l'esecuzione
     # Se l'insieme di istruzioni trovate (righe) e il numero di cicli di clock trovati è lo stesso, allora abbiamo ritrovato la stessa parte di codice nel loop  
     def calcola_clocks_per_parte_loops(self, conta_clocks: int, indice: int):
-        for chiave in self.diz_loops: # Aggiungo cicli di clock e righe istruzioni per ogni loop trovato
-            if self.diz_loops[chiave][1] == True:
-                self.diz_loops[chiave][2] += conta_clocks
-                self.diz_loops[chiave][4].add(indice+1) 
+        for valore_diz in self.diz_loops.values(): # Aggiungo cicli di clock e righe istruzioni per ogni loop trovato
+            if valore_diz[1]:
+                valore_diz[2] += conta_clocks
+                valore_diz[4].add(indice+1) 
         if self.reset_calcolo_loop: # Aggiungo i valori trovati (l'iterazione del loop è terminata o il loop è cominciato)
-            if self.diz_loops[self.valore_loop][1] == True: # loop già cominciato, iterazione terminata
+            if self.diz_loops[self.valore_loop][1]: # loop già cominciato, iterazione terminata
                 self.diz_loops[self.valore_loop][2] = self.diz_loops[self.valore_loop][2] - 1
                 lista_cercata = [self.diz_loops[self.valore_loop][2],self.diz_loops[self.valore_loop][4],1] # [cicli di clock, insieme righe, numero di iterazioni (prima volta 1)] 
                 bool_lista_trovata = False
@@ -846,9 +852,8 @@ class Simulatore:
         return tupla_hazard
         
         # Il metodo si occupa di trovare data hazards, control hazards e mostrare come si comporta la pipeline (dizionario che viene usato per generare vari json file).
-        # è influenzato da vari booleani precedentemente stabiliti ( forwarding o self.meno, ecc...)
-   
-    def trova_valori_per_pipeline(self,istruzione_precedente: str, indice_riga_precedente: int, indice_riga_pre_precedente: int, program_counter: int,totale_clocks: int, nome_registro_tonde: str, indice: int, lista_indice: list, 
+        # è influenzato da vari booleani precedentemente stabiliti (forwarding o meno, ecc...)
+    def trova_valori_per_pipeline(self,istruzione_precedente: str, indice_riga_precedente: int, indice_riga_pre_precedente: int, valore_program_counter: int,totale_clocks: int, nome_registro_tonde: str, indice: int, lista_indice: list, 
                                   bool_salto: bool, bool_saltato: bool, data_hazards_totali: int, control_hazards_totali: int, control_hazards: int, bool_decode: bool, bool_forwarding: bool, bool_messaggi_hazards: bool, bool_analizza_con_esecuzione: bool):
         lista_valori_diz = {"Riga": 0, "Program Counter": 0, "Istruzione Mips": "", "Rappresentazione Pipeline": "", "Numero Bolle Data Hazard": 0, "Numero Bolle Control Hazard": 0, "Valore Clock": 0, "Hazard Trovato": [] }
         if bool_messaggi_hazards:
@@ -880,7 +885,7 @@ class Simulatore:
         conta_clocks += 1
         riga = self.diz_righe[indice+1]
         lista_valori_diz["Riga"] = indice+1 # valore riga del codice mips
-        lista_valori_diz["Program Counter"] = program_counter # valore program counter ( corretto solo se program counter abilitato)
+        lista_valori_diz["Program Counter"] = valore_program_counter # valore program counter (corretto solo se program counter abilitato)
         lista_valori_diz["Istruzione Mips"] = riga # codice mips in quella riga
         bool_branch = False
         if lista_indice[0] not in self.insieme_istruzioni:
@@ -918,8 +923,7 @@ class Simulatore:
                     if not bool_forwarding:
                         if primo_registro_da_controllare.istruzione_mips != "":
                             stalli_primo_registro_not_forwarding = primo_registro_da_controllare.stato_write_back - primo_registro_da_controllare.stato_fase - intero_stato_not_forwarding
-                            if stalli_primo_registro_not_forwarding < 0:
-                                stalli_primo_registro_not_forwarding = 0
+                            stalli_primo_registro_not_forwarding = max(stalli_primo_registro_not_forwarding, 0)
                     # Parte forwarding
                     else:
                         if primo_registro_da_controllare.istruzione_mips != "":
@@ -928,8 +932,7 @@ class Simulatore:
                                 stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 1 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding
                             else:
                                 stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 2 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding
-                            if stalli_primo_registro_forwarding < 0:
-                                stalli_primo_registro_forwarding = 0
+                            stalli_primo_registro_forwarding = max(stalli_primo_registro_forwarding, 0)
                                     
                     tupla_hazard_primo_registro = Simulatore.trova_data_hazard(self, indice, lista_indice, istruzione_precedente, bool_saltato, primo_registro_da_controllare, indice_riga_precedente, indice_riga_pre_precedente, bool_decode, bool_analizza_con_esecuzione)
                         
@@ -1023,7 +1026,7 @@ class Simulatore:
                     break
                 if reg.nome == nome_registro_tonde: # il nome è già cambiato al registro corretto
                     secondo_registro_da_controllare = reg
-                if reg.nome == valore_uno or reg.nome_numerico == valore_uno:
+                if valore_uno in (reg.nome, reg.nome_numerico):
                     primo_registro_da_controllare = reg
         elif istruzione in self.istruzioni_load:
             for reg in self.insieme_registri:
@@ -1031,16 +1034,16 @@ class Simulatore:
                     break
                 if reg.nome == nome_registro_tonde: # il nome è già cambiato al registro corretto
                     primo_registro_da_controllare = reg
-                if reg.nome == valore_uno or reg.nome_numerico == valore_uno:
+                if valore_uno in (reg.nome, reg.nome_numerico):
                     registro_principale = reg
         elif istruzione in self.istruzioni_branch:
             bool_branch = True
             for reg in self.insieme_registri:
                 if primo_registro_da_controllare != "" and secondo_registro_da_controllare != "":
                     break
-                if reg.nome == valore_uno or reg.nome_numerico == valore_uno:
+                if valore_uno in (reg.nome, reg.nome_numerico):
                     primo_registro_da_controllare = reg
-                if reg.nome == valore_due or reg.nome_numerico == valore_due:
+                if valore_due in (reg.nome, reg.nome_numerico):
                     secondo_registro_da_controllare = reg
             if bool_salto:
                 if bool_decode:
@@ -1051,11 +1054,11 @@ class Simulatore:
             for reg in self.insieme_registri:
                 if primo_registro_da_controllare != "" and secondo_registro_da_controllare != "" and registro_principale != "":
                     break
-                if reg.nome == valore_uno or reg.nome_numerico == valore_uno:
+                if valore_uno in (reg.nome, reg.nome_numerico):
                     registro_principale = reg
-                if reg.nome == valore_due or reg.nome_numerico == valore_due:
+                if valore_due in (reg.nome, reg.nome_numerico):
                     primo_registro_da_controllare = reg
-                if reg.nome == valore_tre or reg.nome_numerico == valore_tre:
+                if valore_tre in (reg.nome, reg.nome_numerico):
                     secondo_registro_da_controllare = reg
                     
         if primo_registro_da_controllare != "": # Potrebbe succedere che abbiamo add $s1, $zero, $s2
@@ -1074,8 +1077,7 @@ class Simulatore:
                     # quindi questo - lo stato del registro (stato dell'istruzione in cui faceva parte il registro l'ultima volta) ci dice quanti stalli ottengo. Se è una istruzione branch
                     # potrebbe essere write back allineata con execute (in sostanza meno stalli).
                     stalli_primo_registro_not_forwarding = primo_registro_da_controllare.stato_write_back - primo_registro_da_controllare.stato_fase - intero_stato_not_forwarding
-                    if stalli_primo_registro_not_forwarding < 0:
-                        stalli_primo_registro_not_forwarding = 0
+                    stalli_primo_registro_not_forwarding = max(stalli_primo_registro_not_forwarding, 0)
             # Parte forwarding
             else:
                 if primo_registro_da_controllare.istruzione_mips != "": # lo stato write back non è piu lo stato in cui l'istruzione deve stare (execute o memory devono essere allineati con decode della istruzione attuale), 
@@ -1088,8 +1090,7 @@ class Simulatore:
                             stalli_primo_registro_forwarding -= 1 
                     else:
                         stalli_primo_registro_forwarding = primo_registro_da_controllare.stato_write_back - 2 - primo_registro_da_controllare.stato_fase - intero_stato_forwarding
-                    if stalli_primo_registro_forwarding < 0:
-                        stalli_primo_registro_forwarding = 0
+                    stalli_primo_registro_forwarding = max(stalli_primo_registro_forwarding, 0)
     
             tupla_hazard_primo_registro = Simulatore.trova_data_hazard(self, indice, lista_indice, istruzione_precedente, bool_saltato, primo_registro_da_controllare, indice_riga_precedente, indice_riga_pre_precedente, bool_decode, bool_analizza_con_esecuzione)
                         
@@ -1108,8 +1109,7 @@ class Simulatore:
             if not bool_forwarding:
                 if secondo_registro_da_controllare.istruzione_mips != "":
                     stalli_secondo_registro_not_forwarding = secondo_registro_da_controllare.stato_write_back - secondo_registro_da_controllare.stato_fase - intero_stato_not_forwarding
-                    if stalli_secondo_registro_not_forwarding < 0:
-                        stalli_secondo_registro_not_forwarding = 0
+                    stalli_secondo_registro_not_forwarding = max(stalli_secondo_registro_not_forwarding, 0)
             # Parte forwarding
             else:
                 if secondo_registro_da_controllare.istruzione_mips != "":
@@ -1118,8 +1118,7 @@ class Simulatore:
                         stalli_secondo_registro_forwarding = secondo_registro_da_controllare.stato_write_back - 1 - secondo_registro_da_controllare.stato_fase - intero_stato_forwarding  
                     else:
                         stalli_secondo_registro_forwarding = secondo_registro_da_controllare.stato_write_back - 2 - secondo_registro_da_controllare.stato_fase - intero_stato_forwarding
-                    if stalli_secondo_registro_forwarding < 0:
-                        stalli_secondo_registro_forwarding = 0
+                    stalli_secondo_registro_forwarding = max(stalli_secondo_registro_forwarding, 0)
                         
             tupla_hazard_secondo_registro = Simulatore.trova_data_hazard(self, indice, lista_indice, istruzione_precedente, bool_saltato, secondo_registro_da_controllare, indice_riga_precedente, indice_riga_pre_precedente, bool_decode, bool_analizza_con_esecuzione)
             
@@ -1210,8 +1209,8 @@ class Simulatore:
                     if lista_riga[1][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[1]], 0, lista_riga[1])
                     else:
-                        for chiave in self.diz_numero_registri:
-                            if self.diz_numero_registri[chiave] == lista_riga[1]:
+                        for chiave, valore_diz in self.diz_numero_registri.items():
+                            if valore_diz == lista_riga[1]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[1], 0, nome_numerico)
@@ -1224,8 +1223,8 @@ class Simulatore:
                     if lista_riga[2][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[2]], 0, lista_riga[2])
                     else:
-                        for chiave in self.diz_numero_registri:
-                            if self.diz_numero_registri[chiave] == lista_riga[2]:
+                        for chiave, valore_diz in self.diz_numero_registri.items():
+                            if valore_diz == lista_riga[2]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[2], 0, nome_numerico)
@@ -1234,11 +1233,11 @@ class Simulatore:
                     nuovo_registro.fetch = False
                     nuovo_registro.stato_fase = 5
                     self.insieme_registri.add(nuovo_registro)
-            elif self.aperta_tonda in lista_riga[2]:
+            elif self.aperta_tonda in lista_riga[2]: # Caso ($a0)
                 registro_trovato = False
                 nome_registro = lista_riga[2][lista_riga[2].index(self.aperta_tonda)+1: lista_riga[2].index(self.chiusa_tonda)]
                 for reg in self.insieme_registri:
-                    if reg.nome == nome_registro or reg.nome_numerico == nome_registro:
+                    if nome_registro in (reg.nome, reg.nome_numerico):
                         registro_trovato = True
                         if reg.nome_numerico == nome_registro:
                             nome_registro = reg.nome # Voglio che sia il nome del registro (non valore numerico)
@@ -1248,8 +1247,8 @@ class Simulatore:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[nome_registro], 0, nome_registro)
                         nome_registro = self.diz_numero_registri[nome_registro]
                     else:
-                        for chiave in self.diz_numero_registri:
-                            if self.diz_numero_registri[chiave] == nome_registro:
+                        for chiave, valore_diz  in self.diz_numero_registri.items():
+                            if valore_diz == nome_registro:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(nome_registro, 0, nome_numerico)
@@ -1265,8 +1264,8 @@ class Simulatore:
                     if lista_riga[1][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[1]], 0, lista_riga[1])
                     else:
-                        for chiave in self.diz_numero_registri:
-                            if self.diz_numero_registri[chiave] == lista_riga[1]:
+                        for chiave, valore_diz in self.diz_numero_registri.items():
+                            if valore_diz == lista_riga[1]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[1], 0, nome_numerico)
@@ -1279,8 +1278,8 @@ class Simulatore:
                     if lista_riga[2][1] in self.iniziali_registri_numerici:
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[2]], 0, lista_riga[2])
                     else:
-                        for chiave in self.diz_numero_registri:
-                            if self.diz_numero_registri[chiave] == lista_riga[2]:
+                        for chiave, valore_diz in self.diz_numero_registri.items():
+                            if valore_diz == lista_riga[2]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[2], 0, nome_numerico)
@@ -1296,8 +1295,8 @@ class Simulatore:
                     if lista_riga[3][1] in self.iniziali_registri_numerici: 
                         nuovo_registro = registro.Registro(self.diz_numero_registri[lista_riga[3]], 0, lista_riga[3])
                     else:
-                        for chiave in self.diz_numero_registri:
-                            if self.diz_numero_registri[chiave] == lista_riga[3]:
+                        for chiave, valore_diz in self.diz_numero_registri.items():
+                            if valore_diz == lista_riga[3]:
                                 nome_numerico = chiave
                                 break 
                         nuovo_registro = registro.Registro(lista_riga[3], 0, nome_numerico)
@@ -1415,13 +1414,13 @@ class Simulatore:
         stringa_valore_intero = ""
         registro_trovato = False
         stringa_tipo = ""
-        byte = ".byte"
-        word = ".word"
-        half = ".half"
-        asciiz = ".asciiz"
-        ascii = ".ascii"
+        valore_program_counter = ""
+        tipo_word = ".word"
+        tipo_half = ".half"
+        tipo_asciiz = ".asciiz"
+        tipo_ascii = ".ascii"
         insieme_byte_ascii = {".byte",".ascii",".asciiz"}
-        carattere_slash = "\\"
+        carattere_slash = '\\'
         dizionario_slash = {'n':ord('\n'),'r':ord('\r'),'t':ord('\t'),'b':ord('\b'),'f':ord('\f')}
         chiave_indirizzi = ""
         controlla_len = 0
@@ -1441,7 +1440,7 @@ class Simulatore:
         messaggio_hazard_inizio = "È presente uno stallo dovuto a un control hazard perchè la condizione dell'istruzione branch '"
         messaggio_due_hazard_inizio = "Sono presenti due stalli dovuti a un control hazard perchè la condizione dell'istruzione branch '"
         aggiorna_loops_prossima_riga = False
-        stringa_loops = "" # Usata per i loops se si salta ( non fa lo stesso di stringa_salto)
+        stringa_loops = "" # Usata per i loops se si salta (non fa lo stesso di stringa_salto)
         
         for reg in self.insieme_registri: # Faccio un reset dei registri in quanto ho generato i registri e simulato 
             # il ritrovamento di possibili stalli durante la lettura del testo. 
@@ -1472,7 +1471,7 @@ class Simulatore:
                         chiave_vettori = valore
                         valore_in_lista = 0
                         if stringa_tipo != "":
-                            if stringa_tipo in insieme_byte_ascii and self.testo_modificato[indice][1] == word:
+                            if stringa_tipo in insieme_byte_ascii and self.testo_modificato[indice][1] == tipo_word:
                                 
                                 # L'allineamento dei dati in memoria è importante
                                 # Le word e half vogliono indirizzi pari (multiplo di 4 per word) mentre ascii,asciiz e byte possono avere indirizzi dispari
@@ -1487,11 +1486,11 @@ class Simulatore:
                                 for _ in range(0,controlla_len):
                                     chiave += 1 
                                     diz_dati[chiave] = 0
-                            elif stringa_tipo in insieme_byte_ascii and self.testo_modificato[indice][1] == half:
+                            elif stringa_tipo in insieme_byte_ascii and self.testo_modificato[indice][1] == tipo_half:
                                 if (chiave + 1) % 2 != 0: 
                                     chiave += 1
                                     diz_dati[chiave] = 0
-                            elif stringa_tipo == half and self.testo_modificato[indice][1] == word:
+                            elif stringa_tipo == tipo_half and self.testo_modificato[indice][1] == tipo_word:
                                 if (chiave + 1) % 2 != 0: 
                                     chiave += 1
                                     diz_dati[chiave] = 0 
@@ -1523,20 +1522,20 @@ class Simulatore:
                         # Ricordo che i valori interi positivi possono essere scritti seguiti dal + (+1 o +0x1) 
                         # Viene applicata la giusta conversione dei valori per avere numeri di al massimo 8 esadecimali
                         if len(valore) == 1:
-                            if stringa_tipo == word:
+                            if stringa_tipo == tipo_word:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(int(valore),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_word(self, valore_in_lista, chiave)
-                            elif stringa_tipo == half:
+                            elif stringa_tipo == tipo_half:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(int(valore),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_half(self, valore_in_lista, chiave)             
-                            elif stringa_tipo == asciiz:
+                            elif stringa_tipo == tipo_asciiz:
                                 chiave += 1
                                 diz_dati[chiave] = ord(valore)
                                 chiave += 1
                                 diz_dati[chiave] = 0 # terminatore 0
-                            elif stringa_tipo == ascii:
+                            elif stringa_tipo == tipo_ascii:
                                 chiave += 1
                                 diz_dati[chiave] = ord(valore)
                             else:
@@ -1544,30 +1543,30 @@ class Simulatore:
                                 valore_in_lista = istruzioni_mips.tohex(int(valore),32)[2:] # escludo 0x
                                 Simulatore.aggiorna_diz_memoria_byte(self, valore_in_lista, chiave)
                         elif valore.startswith(self.zero_x) or valore.startswith(self.meno_zero_x) or valore.startswith(self.piu_zero_x):
-                            if stringa_tipo == word:
+                            if stringa_tipo == tipo_word:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(int(valore,16),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_word(self, valore_in_lista, chiave)
-                            elif stringa_tipo == half:
+                            elif stringa_tipo == tipo_half:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(int(valore,16),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_half(self, valore_in_lista, chiave)             
-                            elif stringa_tipo == asciiz:
+                            elif stringa_tipo == tipo_asciiz:
                                 chiave = Simulatore.aggiorna_diz_memoria_ascii_asciiz(self, valore, chiave, carattere_slash, dizionario_slash)
                                 chiave += 1
                                 diz_dati[chiave] = 0 # terminatore 0
-                            elif stringa_tipo == ascii:
+                            elif stringa_tipo == tipo_ascii:
                                 chiave = Simulatore.aggiorna_diz_memoria_ascii_asciiz(self, valore, chiave, carattere_slash, dizionario_slash)
                             else:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(int(valore,16),32)[2:] # escludo 0x
                                 Simulatore.aggiorna_diz_memoria_byte(self, valore_in_lista, chiave)               
                         elif valore.isdigit() or valore[1:].isdigit(): # Per interi sia positivi che negativi
-                            if stringa_tipo == word:
+                            if stringa_tipo == tipo_word:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(int(valore),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_word(self, valore_in_lista, chiave)
-                            elif stringa_tipo == half:
+                            elif stringa_tipo == tipo_half:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(int(valore),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_half(self, valore_in_lista, chiave)             
@@ -1576,34 +1575,34 @@ class Simulatore:
                                 valore_in_lista = istruzioni_mips.tohex(int(valore),32)[2:] # escludo 0x
                                 Simulatore.aggiorna_diz_memoria_byte(self, valore_in_lista, chiave)
                         elif valore[0] == self.carattere_virgoletta and valore[-1] == self.carattere_virgoletta: # è un carattere
-                            if stringa_tipo == word:
+                            if stringa_tipo == tipo_word:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(ord(valore[1]),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_word(self, valore_in_lista, chiave)
-                            elif stringa_tipo == half:
+                            elif stringa_tipo == tipo_half:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(ord(valore[1]),32)[2:] # escludo 0x
                                 chiave = Simulatore.aggiorna_diz_memoria_half(self, valore_in_lista, chiave)             
-                            elif stringa_tipo == asciiz: # Potrebbe succedere 
+                            elif stringa_tipo == tipo_asciiz: # Potrebbe succedere 
                                 chiave = Simulatore.aggiorna_diz_memoria_ascii_asciiz(self, valore, chiave, carattere_slash, dizionario_slash)
                                 chiave += 1
                                 diz_dati[chiave] = 0 # terminatore 0
-                            elif stringa_tipo == ascii: # Potrebbe succedere 
+                            elif stringa_tipo == tipo_ascii: # Potrebbe succedere 
                                 chiave = Simulatore.aggiorna_diz_memoria_ascii_asciiz(self, valore, chiave, carattere_slash, dizionario_slash)
                             else:
                                 chiave += 1
                                 valore_in_lista = istruzioni_mips.tohex(ord(valore[1]),32)[2:] # escludo 0x
                                 Simulatore.aggiorna_diz_memoria_byte(self, valore_in_lista, chiave)
                         else:
-                            if stringa_tipo == asciiz:
+                            if stringa_tipo == tipo_asciiz:
                                 chiave = Simulatore.aggiorna_diz_memoria_ascii_asciiz(self, valore, chiave, carattere_slash, dizionario_slash)
                                 chiave += 1
                                 diz_dati[chiave] = 0 # terminatore 0
-                            elif stringa_tipo == ascii: 
+                            elif stringa_tipo == tipo_ascii: 
                                 chiave = Simulatore.aggiorna_diz_memoria_ascii_asciiz(self, valore, chiave, carattere_slash, dizionario_slash)
                     else:
                         stringa_tipo = valore
-                        if stringa_tipo == asciiz and indice_secondario == len(self.testo_modificato[indice])-1:
+                        if stringa_tipo == tipo_asciiz and indice_secondario == len(self.testo_modificato[indice])-1:
                             chiave += 1
                             diz_dati[chiave] = 0 # Per stringa vuota aggiungiamo il terminatore 0 
                     indice_secondario += 1 
@@ -1624,9 +1623,9 @@ class Simulatore:
                             conta_clocks = 1+control_hazards
                             Simulatore.calcola_clocks_per_parte_loops(self, conta_clocks, indice)
                             pc.intero += 4
-                            program_counter = pc.intero
+                            valore_program_counter = pc.intero
                             
-                            diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": program_counter, "Istruzione Mips": valore, "Rappresentazione Pipeline": self.stringa_bolla*control_hazards+self.stringa_pipeline, "Numero Bolle Data Hazard": 0, "Numero Bolle Control Hazard": control_hazards, "Valore Clock": totale_clocks, "Hazard Trovato": [] }
+                            diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": valore_program_counter, "Istruzione Mips": valore, "Rappresentazione Pipeline": self.stringa_bolla*control_hazards+self.stringa_pipeline, "Numero Bolle Data Hazard": 0, "Numero Bolle Control Hazard": control_hazards, "Valore Clock": totale_clocks, "Hazard Trovato": [] }
                             # Analizzo le istruzioni nella pipeline durante un determinato ciclo di clock
                             if self.ciclo_di_clock != 0: # Non vengono risolti i casi con clock minore di 5
                                 Simulatore.trova_istruzioni_e_bolle_in_pipeline(self, indice, indice_riga_precedente, istruzione_mips, totale_clocks, self.syscall, diz_pipeline[chiave_diz_ris], bool_decode)
@@ -1651,7 +1650,7 @@ class Simulatore:
                             if bool_messaggi_hazards:
                                 diz_pipeline[chiave_diz_ris]["Messaggio"] = ""
                             if valore in self.diz_loops:
-                                if (stringa_loops == "" and self.diz_loops[valore][1] == False) or (valore == stringa_loops):
+                                if (stringa_loops == "" and not self.diz_loops[valore][1]) or (valore == stringa_loops):
                                     self.valore_loop = valore # dovrebbe essere il label di testo
                                     aggiorna_loops_prossima_riga = True
                             else:
@@ -1668,9 +1667,9 @@ class Simulatore:
                                 conta_clocks = 1+control_hazards
                                 Simulatore.calcola_clocks_per_parte_loops(self, conta_clocks, indice)
                                 pc.intero += 4
-                                program_counter = pc.intero
+                                valore_program_counter = pc.intero
                                 
-                                diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": program_counter, "Istruzione Mips": self.diz_righe[indice+1], "Rappresentazione Pipeline": self.stringa_bolla*control_hazards+self.stringa_pipeline, "Numero Bolle Data Hazard": 0, "Numero Bolle Control Hazard": control_hazards, "Valore Clock": totale_clocks, "Hazard Trovato": [] }
+                                diz_pipeline[chiave_diz_ris] = {"Riga": indice+1, "Program Counter": valore_program_counter, "Istruzione Mips": self.diz_righe[indice+1], "Rappresentazione Pipeline": self.stringa_bolla*control_hazards+self.stringa_pipeline, "Numero Bolle Data Hazard": 0, "Numero Bolle Control Hazard": control_hazards, "Valore Clock": totale_clocks, "Hazard Trovato": [] }
                                 # Analizzo le istruzioni nella pipeline durante un determinato ciclo di clock
                                 if self.ciclo_di_clock != 0: # Non vengono risolti i casi con clock minore di 5
                                     Simulatore.trova_istruzioni_e_bolle_in_pipeline(self, indice, indice_riga_precedente, istruzione_mips, totale_clocks, self.diz_righe[indice+1], diz_pipeline[chiave_diz_ris], bool_decode)
@@ -1688,7 +1687,7 @@ class Simulatore:
                                             messaggio_hazards = messaggio_due_hazard_inizio+istruzione_precedente+"' a riga "+riga_branch+" è soddisfatta. L'istruzione branch ha deciso il salto in fase di EX e non in fase di ID quindi ci sono due stalli"
                                         diz_pipeline[chiave_diz_ris]["Messaggio"] = messaggio_hazards
                                 if valore in self.diz_loops: # loop syscall
-                                    if (stringa_loops == "" and self.diz_loops[valore][1] == False) or (valore == stringa_loops):
+                                    if (stringa_loops == "" and not self.diz_loops[valore][1]) or (valore == stringa_loops):
                                         self.reset_calcolo_loop = True
                                         self.valore_loop = valore
                                 control_hazards = 0 # Reset perchè non eseguo il resto del codice
@@ -1708,7 +1707,7 @@ class Simulatore:
                         else: # abbiamo nome testo più istruzione (per i loop nel codice)
                             if valore in self.diz_loops: # loop normalmente
                                 # Considero se il loop è già iniziato e sta ricominciando (iterazione successiva) o se sta cominciando la prima iterazione
-                                if (stringa_loops == "" and self.diz_loops[valore][1] == False) or (valore == stringa_loops):
+                                if (stringa_loops == "" and not self.diz_loops[valore][1]) or (valore == stringa_loops):
                                     self.reset_calcolo_loop = True
                                     self.valore_loop = valore
                     indice_secondario += 1 
@@ -1727,7 +1726,7 @@ class Simulatore:
                 if valore.startswith(self.dollaro): # Controllo registri
                     if valore[1] in self.iniziali_registri:
                         for reg in self.insieme_registri:
-                            if reg.nome == valore or reg.nome_numerico == valore: # Se il registro esiste già lo prendiamo dall'insieme
+                            if valore in (reg.nome, reg.nome_numerico): # Se il registro esiste già lo prendiamo dall'insieme
                                 if valore_posizione == 1:
                                     prima_posizione = reg
                                     valore_posizione += 1
@@ -1822,8 +1821,7 @@ class Simulatore:
                                     for elem in valore:
                                         if elem == self.aperta_tonda:
                                             break
-                                        else:
-                                            stringa_valore_intero += elem
+                                        stringa_valore_intero += elem
                                     if stringa_valore_intero.startswith(self.piu): # potrei avere +5($s7), quel piu lo rimuovo
                                         stringa_valore_intero = stringa_valore_intero[1:]
                                     chiave_vettori = valore[0:valore.index(self.aperta_tonda)]
@@ -2065,26 +2063,26 @@ class Simulatore:
                             else:
                                 terza_posizione = int(stringa_corretta)
                         elif self.carattere_virgoletta in valore: # per caratteri ascii  
-                                terza_posizione = ord(valore[1])
+                            terza_posizione = ord(valore[1])
                         else:
                             if valore in self.diz_indirizzi: # da capire se succede (probabilmente non possibile)
                                 terza_posizione = self.diz_indirizzi[valore]
                             else:
                                 terza_posizione = valore           
                 indice_secondario += 1
-                if(indice_secondario == len(self.testo_modificato[indice])): # Simulo l'esecuzione dell'istruzione
+                if indice_secondario == len(self.testo_modificato[indice]): # Simulo l'esecuzione dell'istruzione
                     pc.intero += 4 # incremento il program counter
-                    program_counter = pc.intero
+                    valore_program_counter = pc.intero
                     stringa_loops = ""
                     # Simulo l'istruzione 
                     operazione = chiama_istruzioni_mips(self.istruzioni, istruzione_mips, prima_posizione, seconda_posizione, terza_posizione)
-                    if type(operazione) == tuple: # se sono tuple allora si fa un salto
+                    if isinstance(operazione, tuple): # se sono tuple allora si fa un salto
                         if(operazione[1]): # se booleano a True
                             bool_salto = True # Indico che si verifica il salto a un'altra istruzione
                             stringa_loops = operazione[0] # aggiorno la stringa_loops con il nome del testo trovato
                         stringa_salto = operazione[0]   
                     # Cerco i valori legati alla pipeline (stalli, data e control hazard, cicli di clock, ecc...)
-                    risultato_per_pipeline = Simulatore.trova_valori_per_pipeline(self,istruzione_precedente,indice_riga_precedente,indice_riga_pre_precedente,program_counter,totale_clocks,nome_registro,indice,self.testo_modificato[indice],
+                    risultato_per_pipeline = Simulatore.trova_valori_per_pipeline(self,istruzione_precedente,indice_riga_precedente,indice_riga_pre_precedente,valore_program_counter,totale_clocks,nome_registro,indice,self.testo_modificato[indice],
                                                                                 bool_salto,bool_saltato,data_hazards_totali,control_hazards_totali,control_hazards,bool_decode,bool_forwarding,bool_messaggi_hazards,bool_analizza_con_esecuzione) 
                     # Salvo il valore di cicli di clock ottenuto per ogni parte del codice (parte prima del ciclo loop, parti nel ciclo loop, parte finale dopo i loop aggiornata alla fine del codice) 
                     if self.reset_calcolo_loop: # reset loops
@@ -2116,10 +2114,7 @@ class Simulatore:
                     chiave_diz_ris += 1
                     
                     # Verifico se il salto a un altra riga è stato eseguito
-                    if bool_salto:
-                        bool_saltato = True
-                    else:
-                        bool_saltato = False
+                    bool_saltato = bool(bool_salto)
                     
                     indice_riga_pre_precedente = indice_riga_precedente
                     indice_riga_precedente = indice
@@ -2131,7 +2126,7 @@ class Simulatore:
                             control_hazards = 2
                     else:
                         control_hazards = 0 
-                    if type(stringa_salto) == int and bool_salto:
+                    if isinstance(stringa_salto, int) and bool_salto:
                         indice = stringa_salto - 1 
                         # il pc é modificato nella jalr
                     elif bool_salto: 
@@ -2170,11 +2165,11 @@ class Simulatore:
         pc.intero = self.istruzioni.pc_finale
         chiave_loop = "Cicli di clock nel loop "
         # Aggiorno il calcolo dei cicli di clock per ogni parte dei cicli loop trovata (do una migliore visualizzione dei dati)
-        for chiave in self.diz_loops:
+        for chiave, valore_diz in self.diz_loops.items():
             intero = 1
-            for indice_lista in range(0,len(self.diz_loops[chiave][3])):
-                stringa_aggiornamento = "( "+str(self.diz_loops[chiave][3][indice_lista][0] - (self.diz_loops[chiave][3][indice_lista][3]+self.diz_loops[chiave][3][indice_lista][4]))+"(I) "+str(self.diz_loops[chiave][3][indice_lista][3])+"(DH) "+str(self.diz_loops[chiave][3][indice_lista][4])+"(CH) )"
-                diz_hazards[chiave_loop+chiave+" ("+str(intero)+") "+"(x"+str(self.diz_loops[chiave][3][indice_lista][2])+") "+stringa_aggiornamento] = self.diz_loops[chiave][3][indice_lista][0]
+            for indice_lista in range(0,len(valore_diz[3])):
+                stringa_aggiornamento = "( "+str(valore_diz[3][indice_lista][0] - (valore_diz[3][indice_lista][3]+valore_diz[3][indice_lista][4]))+"(I) "+str(valore_diz[3][indice_lista][3])+"(DH) "+str(valore_diz[3][indice_lista][4])+"(CH) )"
+                diz_hazards[chiave_loop+chiave+" ("+str(intero)+") "+"(x"+str(valore_diz[3][indice_lista][2])+") "+stringa_aggiornamento] = valore_diz[3][indice_lista][0]
                 intero += 1
         # Se non trovo cicli loop allora spiego che non sono stati trovati loop
         if self.valore_loop == "(Nessun loop trovato)":

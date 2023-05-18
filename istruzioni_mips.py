@@ -5,7 +5,7 @@ import registro
 # Nel mio caso 32 bit. 
 
 def tohex(val, nbits):
-        return hex((val + (1 << nbits)) % (1 << nbits))
+    return hex((val + (1 << nbits)) % (1 << nbits))
    
 # La funzione si occupa di trovare il valore corretto intero da esadecimale per un architettura a 32 bit.   
     
@@ -20,24 +20,16 @@ def srl_bit(esadecimale, val):
     stringa_bin_secondaria = ""
     zero = "0"
     stringa_shifter = ""
-    esadecimale = esadecimale[2:]
+    esadecimale = esadecimale[2:] # rimuovo 0x
     esadecimale_ris = ""
-    n = len(esadecimale)
-    while n < 8: # Devo avere 8 esadecimali (aggiungo zeri)
-        n += 1
-        esadecimale_ris += zero
-    esadecimale_ris += esadecimale    
-    for _ in range(0,val): # Numero di zeri da aggiungere per lo shift
-        stringa_shifter += zero
+    # Devo avere 8 esadecimali (aggiungo zeri)
+    esadecimale_ris = esadecimale_ris.join(zero for _ in range(8-len(esadecimale))) + esadecimale
+    # Numero di zeri da aggiungere per lo shift
+    stringa_shifter = stringa_shifter.join(zero for _ in range(0, val))
     for elem in esadecimale_ris: # Converto ogni esadecimale in binario (4 bit per ogni esadecimale)
-        stringa_bin_secondaria = bin(int(elem,16))
-        stringa_bin_secondaria = stringa_bin_secondaria[2:]
-        if len(stringa_bin_secondaria) == 3: # Servono 4 bit (aggiungo zero)
-            stringa_bin_secondaria = zero + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 2: # Servono 4 bit (aggiungo zero)
-            stringa_bin_secondaria = zero*2 + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 1: # Servono 4 bit (aggiungo zero)
-            stringa_bin_secondaria = zero*3 + stringa_bin_secondaria 
+        stringa_bin_secondaria = bin(int(elem,16))[2:] # rimuovo 0b ([2:])
+        # Servono 4 bit (aggiungo zeri)
+        stringa_bin_secondaria = ''.join(zero for _ in range(4-len(stringa_bin_secondaria))) + stringa_bin_secondaria 
         stringa_bin_ris += stringa_bin_secondaria 
     stringa_bin_ris = stringa_shifter + stringa_bin_ris[0:len(stringa_bin_ris)-val] # Ottengo la stringa risultante dallo shift
     stringa_bin_ris = tohex(int(stringa_bin_ris,2),32) # Riconverto in esadecimale
@@ -52,23 +44,15 @@ def sll_bit(esadecimale, val):
     stringa_shifter = ""
     esadecimale = esadecimale[2:]
     esadecimale_ris = ""
-    n = len(esadecimale)
-    while n < 8: # Devo avere 8 esadecimali (aggiungo zeri)
-        n += 1
-        esadecimale_ris += zero
-    esadecimale_ris += esadecimale    
-    for _ in range(0,val): # Numero di zeri da aggiungere per lo shift
-        stringa_shifter += zero
+    # Devo avere 8 esadecimali (aggiungo zeri)
+    esadecimale_ris = esadecimale_ris.join(zero for _ in range(8-len(esadecimale))) + esadecimale
+    # Numero di zeri da aggiungere per lo shift
+    stringa_shifter = stringa_shifter.join(zero for _ in range(0, val))
     for elem in esadecimale_ris: # Converto ogni esadecimale in binario (4 bit per ogni esadecimale)
-        stringa_bin_secondaria = bin(int(elem,16))
-        stringa_bin_secondaria = stringa_bin_secondaria[2:]
-        if len(stringa_bin_secondaria) == 3: # Servono 4 bit (aggiungo zero)
-            stringa_bin_secondaria = zero + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 2: # Servono 4 bit (aggiungo zero)
-            stringa_bin_secondaria = zero*2 + stringa_bin_secondaria
-        elif len(stringa_bin_secondaria) == 1: # Servono 4 bit (aggiungo zero)
-            stringa_bin_secondaria = zero*3 + stringa_bin_secondaria
-        stringa_bin_ris += stringa_bin_secondaria 
+        stringa_bin_secondaria = bin(int(elem,16))[2:] # rimuovo 0b ([2:])
+        # Servono 4 bit (aggiungo zeri)
+        stringa_bin_secondaria = ''.join(zero for _ in range(4-len(stringa_bin_secondaria))) + stringa_bin_secondaria 
+        stringa_bin_ris += stringa_bin_secondaria  
     stringa_bin_ris = stringa_bin_ris[-len(stringa_bin_ris)+val:] + stringa_shifter # Ottengo la stringa risultante dallo shift
     stringa_bin_ris = tohex(int(stringa_bin_ris,2),32) # Riconverto in esadecimale
     return stringa_bin_ris       
@@ -82,10 +66,9 @@ class Istruzioni:
     
     def __init__(self):
         self.diz_indirizzi = {}
-        self.diz_dati = {}
         self.ultimo_valore_possibile = 272629759
-        for key in range(268435456, 268500993): # dizionario con 65536 valori per simulare la memoria iniziale (valori positivi)
-            self.diz_dati[key] = 0
+        # dizionario con 65536 valori per simulare la memoria iniziale (valori positivi)
+        self.diz_dati = {key: 0 for key in range(268435456, 268500993)} 
         for key in range(1, 65537): # dizionario con 65536 valori per simulare la memoria iniziale (valori negativi)
             self.diz_dati[-key] = 0
         self.diz_indirizzi_text = {}
@@ -139,23 +122,23 @@ class Istruzioni:
     
     def oor(self, tupla_valori):
         Istruzioni.incrementa_program_counter(self)        
-        if type(tupla_valori[0]) == int:
+        if isinstance(tupla_valori[0],int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if len(tupla_valori) == 2:
+        if tupla_valori[2] == "": # Check su terza posizione (usato o meno)
             intero = tupla_valori[1]
             tupla_valori[0].intero = tupla_valori[0].intero | intero
         else:
             primo_registro_o_intero = tupla_valori[1]
             secondo_registro_o_intero = tupla_valori[2]
-            if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+            if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero | secondo_registro_o_intero
-            elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+            elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero.intero | secondo_registro_o_intero.intero
-            elif type(primo_registro_o_intero) == int:
+            elif isinstance(primo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero | secondo_registro_o_intero.intero
-            elif type(secondo_registro_o_intero) == int:
+            elif isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero.intero | secondo_registro_o_intero  
         stringa_esadecimale = tohex(tupla_valori[0].intero,self.intero) # controllo sul valore per dare una giusta 
         # rappresentazione a 32 bit
@@ -166,23 +149,23 @@ class Istruzioni:
     
     def xor(self, tupla_valori):
         Istruzioni.incrementa_program_counter(self)
-        if type(tupla_valori[0]) == int:
+        if isinstance(tupla_valori[0],int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if len(tupla_valori) == 2:
+        if tupla_valori[2] == "": # Check su terza posizione (usato o meno)
             intero = tupla_valori[1]
             tupla_valori[0].intero = tupla_valori[0].intero ^ intero
         else:
             primo_registro_o_intero = tupla_valori[1]
             secondo_registro_o_intero = tupla_valori[2]
-            if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+            if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero ^ secondo_registro_o_intero
-            elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+            elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero.intero ^ secondo_registro_o_intero.intero
-            elif type(primo_registro_o_intero) == int:
+            elif isinstance(primo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero ^ secondo_registro_o_intero.intero
-            elif type(secondo_registro_o_intero) == int:
+            elif isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero.intero ^ secondo_registro_o_intero
         stringa_esadecimale = tohex(tupla_valori[0].intero,self.intero) # controllo sul valore per dare una giusta 
         # rappresentazione a 32 bit
@@ -193,23 +176,23 @@ class Istruzioni:
     
     def aand(self, tupla_valori):
         Istruzioni.incrementa_program_counter(self)
-        if type(tupla_valori[0]) == int:
+        if isinstance(tupla_valori[0],int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if len(tupla_valori) == 2:
+        if tupla_valori[2] == "": # Check su terza posizione (usato o meno)
             intero = tupla_valori[1]
             tupla_valori[0].intero = tupla_valori[0].intero & intero
         else:
             primo_registro_o_intero = tupla_valori[1]
             secondo_registro_o_intero = tupla_valori[2]
-            if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+            if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero & secondo_registro_o_intero
-            elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+            elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero.intero & secondo_registro_o_intero.intero
-            elif type(primo_registro_o_intero) == int:
+            elif isinstance(primo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero & secondo_registro_o_intero.intero
-            elif type(secondo_registro_o_intero) == int:
+            elif isinstance(secondo_registro_o_intero,int):
                 tupla_valori[0].intero = primo_registro_o_intero.intero & secondo_registro_o_intero      
         stringa_esadecimale = tohex(tupla_valori[0].intero,self.intero) # controllo sul valore per dare una giusta 
         # rappresentazione a 32 bit
@@ -220,17 +203,17 @@ class Istruzioni:
     
     def addu(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!"  # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero + secondo_registro_o_intero
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero.intero + secondo_registro_o_intero.intero
-        elif type(primo_registro_o_intero) == int:
+        elif isinstance(primo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero + secondo_registro_o_intero.intero
-        elif type(secondo_registro_o_intero) == int:
+        elif isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero.intero + secondo_registro_o_intero     
         stringa_esadecimale = tohex(registro_destinazione.intero,self.intero) # controllo sul valore per dare una giusta 
         # rappresentazione a 32 bit
@@ -241,11 +224,11 @@ class Istruzioni:
     
     def addi(self, registro_destinazione, registro_o_intero, secondo_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori 
-        if type(registro_o_intero) == int:
+        if isinstance(registro_o_intero,int):
             registro_destinazione.intero = registro_o_intero + secondo_intero
         else:
             registro_destinazione.intero = registro_o_intero.intero + secondo_intero
@@ -258,11 +241,11 @@ class Istruzioni:
     
     def addiu(self, registro_destinazione, registro_o_intero, secondo_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori 
-        if type(registro_o_intero) == int:
+        if isinstance(registro_o_intero,int):
             registro_destinazione.intero = registro_o_intero + secondo_intero
         else:
             registro_destinazione.intero = registro_o_intero.intero + secondo_intero
@@ -275,17 +258,17 @@ class Istruzioni:
     
     def add(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero + secondo_registro_o_intero
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero.intero + secondo_registro_o_intero.intero
-        elif type(primo_registro_o_intero) == int:
+        elif isinstance(primo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero + secondo_registro_o_intero.intero
-        elif type(secondo_registro_o_intero) == int:
+        elif isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero.intero + secondo_registro_o_intero     
         stringa_esadecimale = tohex(registro_destinazione.intero,self.intero) # controllo sul valore per dare una giusta 
         # rappresentazione a 32 bit
@@ -296,11 +279,11 @@ class Istruzioni:
     
     def subi(self, registro_destinazione, registro_o_intero, secondo_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(registro_o_intero) == int:
+        if isinstance(registro_o_intero,int):
             registro_destinazione.intero = registro_o_intero - secondo_intero
         else:
             registro_destinazione.intero = registro_o_intero.intero - secondo_intero
@@ -313,17 +296,17 @@ class Istruzioni:
     
     def sub(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero - secondo_registro_o_intero
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero.intero - secondo_registro_o_intero.intero
-        elif type(primo_registro_o_intero) == int:
+        elif isinstance(primo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero - secondo_registro_o_intero.intero
-        elif type(secondo_registro_o_intero) == int:
+        elif isinstance(secondo_registro_o_intero,int):
             registro_destinazione.intero = primo_registro_o_intero.intero - secondo_registro_o_intero
         stringa_esadecimale = tohex(registro_destinazione.intero,self.intero) # controllo sul valore per dare una giusta 
         # rappresentazione a 32 bit
@@ -334,37 +317,37 @@ class Istruzioni:
     
     def slt(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero < secondo_registro_o_intero:
-               registro_destinazione.intero = 1
+                registro_destinazione.intero = 1
             else:
-               registro_destinazione.intero = 0
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+                registro_destinazione.intero = 0
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero < secondo_registro_o_intero.intero:
-               registro_destinazione.intero = 1
+                registro_destinazione.intero = 1
             else:
-               registro_destinazione.intero = 0
-        elif type(primo_registro_o_intero) == int:
+                registro_destinazione.intero = 0
+        elif isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero < secondo_registro_o_intero.intero:
-               registro_destinazione.intero = 1
+                registro_destinazione.intero = 1
             else:
-               registro_destinazione.intero = 0
-        elif type(secondo_registro_o_intero) == int:
+                registro_destinazione.intero = 0
+        elif isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero < secondo_registro_o_intero:
-               registro_destinazione.intero = 1
+                registro_destinazione.intero = 1
             else:
-               registro_destinazione.intero = 0      
+                registro_destinazione.intero = 0      
         return "registro modificato"
     
     # Il metodo si occupa di simulare l'istruzione mips lui
     
     def lui(self, registro_destinazione, intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
@@ -377,12 +360,12 @@ class Istruzioni:
     
     def sll(self, registro_destinazione, primo_registro_o_intero, secondo_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
         stringa_esadecimale = ""
-        if type(primo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int):
             stringa_esadecimale = sll_bit(tohex(primo_registro_o_intero,32),secondo_intero) # controllo sul valore per dare una giusta 
             # rappresentazione a 32 bit
             registro_destinazione.intero = toint(int(stringa_esadecimale, 16))
@@ -397,12 +380,12 @@ class Istruzioni:
     def srl(self, registro_destinazione, primo_registro_o_intero, secondo_intero): 
         Istruzioni.incrementa_program_counter(self)
         # Potrebbe non funzionare. Usa la stessa strutture del sll. Va testato
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
         stringa_esadecimale = ""
-        if type(primo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int):
             stringa_esadecimale = srl_bit(tohex(primo_registro_o_intero,32),secondo_intero)
             # controllo sul valore per dare una giusta 
             # rappresentazione a 32 bit
@@ -410,7 +393,6 @@ class Istruzioni:
         else:
             stringa_esadecimale = srl_bit(tohex(primo_registro_o_intero.intero,32),secondo_intero) # controllo sul valore per dare una giusta 
             # rappresentazione a 32 bit
-            esa = tohex(primo_registro_o_intero.intero >> 10,32)
             registro_destinazione.intero = toint(int(stringa_esadecimale, 16))
         return "registro modificato"
     
@@ -418,7 +400,7 @@ class Istruzioni:
     
     def sw(self, primo_registro, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(primo_registro) == int:
+        if isinstance(primo_registro,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
@@ -436,7 +418,7 @@ class Istruzioni:
     
     def sh(self, primo_registro, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(primo_registro) == int:
+        if isinstance(primo_registro,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
@@ -452,7 +434,7 @@ class Istruzioni:
     
     def sb(self, primo_registro, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(primo_registro) == int:
+        if isinstance(primo_registro,int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori 
@@ -467,16 +449,16 @@ class Istruzioni:
     def blt(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero < secondo_registro_o_intero:
                 salto = True
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero < secondo_registro_o_intero.intero:
                 salto = True
-        elif type(primo_registro_o_intero) == int:
+        elif isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero < secondo_registro_o_intero.intero:
                 salto = True
-        elif type(secondo_registro_o_intero) == int:
+        elif isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero < secondo_registro_o_intero:
                 salto = True 
         return stringa, salto
@@ -486,7 +468,7 @@ class Istruzioni:
     def bltz(self, primo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero < 0:
                 salto = True
         else:
@@ -499,16 +481,16 @@ class Istruzioni:
     def bne(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero != secondo_registro_o_intero:
                 salto = True
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero != secondo_registro_o_intero.intero:
                 salto = True
-        elif type(primo_registro_o_intero) == int:
+        elif isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero != secondo_registro_o_intero.intero:
                 salto = True
-        elif type(secondo_registro_o_intero) == int:  
+        elif isinstance(secondo_registro_o_intero,int):  
             if primo_registro_o_intero.intero != secondo_registro_o_intero:
                 salto = True 
         return stringa, salto
@@ -518,7 +500,7 @@ class Istruzioni:
     def bnez(self, primo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero != 0:
                 salto = True
         else:
@@ -531,16 +513,16 @@ class Istruzioni:
     def bge(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero >= secondo_registro_o_intero:
                 salto = True
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero >= secondo_registro_o_intero.intero:
                 salto = True
-        elif type(primo_registro_o_intero) == int:
+        elif isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero >= secondo_registro_o_intero.intero:
                 salto = True
-        elif type(secondo_registro_o_intero) == int:  
+        elif isinstance(secondo_registro_o_intero,int):  
             if primo_registro_o_intero.intero >= secondo_registro_o_intero:
                 salto = True 
         return stringa, salto
@@ -550,7 +532,7 @@ class Istruzioni:
     def bgez(self, primo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero >= 0:
                 salto = True
         else:
@@ -563,16 +545,16 @@ class Istruzioni:
     def beq(self, primo_registro_o_intero, secondo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int and type(secondo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero == secondo_registro_o_intero:
                 salto = True
-        elif type(primo_registro_o_intero) != int and type(secondo_registro_o_intero) != int:
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero == secondo_registro_o_intero.intero:
                 salto = True
-        elif type(primo_registro_o_intero) == int:
+        elif isinstance(primo_registro_o_intero,int):
             if primo_registro_o_intero == secondo_registro_o_intero.intero:
                 salto = True
-        elif type(secondo_registro_o_intero) == int:
+        elif isinstance(secondo_registro_o_intero,int):
             if primo_registro_o_intero.intero == secondo_registro_o_intero:
                 salto = True 
         return stringa, salto
@@ -582,7 +564,7 @@ class Istruzioni:
     def beqz(self, primo_registro_o_intero, stringa):
         Istruzioni.incrementa_program_counter(self)
         salto = False
-        if type(primo_registro_o_intero) == int:
+        if isinstance(primo_registro_o_intero, int):
             if primo_registro_o_intero == 0:
                 salto = True
         else:
@@ -604,7 +586,7 @@ class Istruzioni:
         Istruzioni.incrementa_program_counter(self)
         salto = True
         if pc_piu_quattro:
-           self.pc.intero += 4 
+            self.pc.intero += 4 
         self.ra.intero = self.pc.intero
         return stringa, salto
     
@@ -616,7 +598,7 @@ class Istruzioni:
         salto = True
         intero = ""
         if pc_piu_quattro:
-           self.pc.intero += 4 
+            self.pc.intero += 4 
         if tupla_valori[1] == "":
             self.ra.intero = self.pc.intero
             intero = self.diz_indirizzi_text[tupla_valori[0].intero] # Non funziona per istruzioni non nelle righe del testo (generate da mars)
@@ -633,11 +615,11 @@ class Istruzioni:
     
     def move(self, registro_destinazione, registro_o_intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        if type(registro_o_intero) == int:
+        if isinstance(registro_o_intero, int):
             registro_destinazione.intero = registro_o_intero
         else:
             registro_destinazione.intero = registro_o_intero.intero
@@ -650,7 +632,7 @@ class Istruzioni:
         
     def li(self, registro_destinazione, intero):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
@@ -665,18 +647,17 @@ class Istruzioni:
         
     def lb(self, registro_destinazione, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = hex(self.diz_dati[chiave_in_diz])
-        stringa_binario = stringa_binario[2:] # rimuovo 0x
+        stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
         aggiungi_zeri = 2 - len(stringa_binario)
         stringa_binario = self.zero*aggiungi_zeri + stringa_binario
         stringa_bit = bin(int(stringa_binario[0],16))
-        if len(stringa_bit) == 6: # per esempio caso 0b1000 ( 8 bit a byte e se ho 1 inserisco 0xff...)
-           stringa_binario = self.stringa_lb_f+stringa_binario 
-           registro_destinazione.intero = toint(int(stringa_binario,16)) # negativo
+        if len(stringa_bit) == 6: # per esempio caso 0b1000 (8 bit a byte e se ho 1 inserisco 0xff...)
+            stringa_binario = self.stringa_lb_f+stringa_binario 
+            registro_destinazione.intero = toint(int(stringa_binario,16)) # negativo
         else:
             registro_destinazione.intero = int(stringa_binario,16) # positivo
         return "registro modificato"  
@@ -685,12 +666,11 @@ class Istruzioni:
     
     def lbu(self, registro_destinazione, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = hex(self.diz_dati[chiave_in_diz])
-        stringa_binario = stringa_binario[2:] # rimuovo 0x
+        stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
         registro_destinazione.intero = int(stringa_binario,16) # positivo
         return "registro modificato"      
     
@@ -698,21 +678,18 @@ class Istruzioni:
     
     def lh(self, registro_destinazione, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = hex(self.diz_dati[chiave_in_diz+1])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(stringa_binario)
-        stringa_binario = self.zero*aggiungi_zeri + stringa_binario
-        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(seconda_stringa_binario)
-        seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
-        stringa_binario = stringa_binario + seconda_stringa_binario
+        # Salvo i valori presi dalla memoria ([2:] per rimuovere 0x)
+        lista_byte = [hex(self.diz_dati[chiave_in_diz+1])[2:],hex(self.diz_dati[chiave_in_diz])[2:]]
+        # Unisco ogni stringa esadecimale per ottenere la stringa risultante
+        stringa_binario = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
         stringa_bit = bin(int(stringa_binario[0],16))
-        if len(stringa_bit) == 6: # per esempio caso 0b1000 ( 8 bit a byte e se ho 1 inserisco 0xff...)
-           stringa_binario = self.stringa_lh_f+stringa_binario 
-           registro_destinazione.intero = toint(int(stringa_binario,16)) # negativo
+        if len(stringa_bit) == 6: # per esempio caso 0b1000 (8 bit a byte e se ho 1 inserisco 0xff...)
+            stringa_binario = self.stringa_lh_f+stringa_binario 
+            registro_destinazione.intero = toint(int(stringa_binario,16)) # negativo
         else:
             registro_destinazione.intero = int(stringa_binario,16) # positivo
         return "registro modificato"
@@ -721,17 +698,14 @@ class Istruzioni:
     
     def lhu(self, registro_destinazione, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = hex(self.diz_dati[chiave_in_diz+1])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(stringa_binario)
-        stringa_binario = self.zero*aggiungi_zeri + stringa_binario
-        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(seconda_stringa_binario)
-        seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
-        stringa_binario = stringa_binario + seconda_stringa_binario
+        # Salvo i valori presi dalla memoria ([2:] per rimuovere 0x)
+        lista_byte = [hex(self.diz_dati[chiave_in_diz+1])[2:],hex(self.diz_dati[chiave_in_diz])[2:]]
+        # Unisco ogni stringa esadecimale per ottenere la stringa risultante
+        stringa_binario = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
         registro_destinazione.intero = int(stringa_binario,16) # positivo
         return "registro modificato"
     
@@ -739,25 +713,15 @@ class Istruzioni:
     
     def lw(self, registro_destinazione, chiave_in_diz):
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = hex(self.diz_dati[chiave_in_diz+3])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(stringa_binario)
-        stringa_binario = self.zero*aggiungi_zeri + stringa_binario
-        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz+2])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(seconda_stringa_binario)
-        seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
-        stringa_binario = stringa_binario + seconda_stringa_binario
-        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz+1])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(seconda_stringa_binario)
-        seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
-        stringa_binario = stringa_binario + seconda_stringa_binario
-        seconda_stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(seconda_stringa_binario)
-        seconda_stringa_binario = self.zero*aggiungi_zeri + seconda_stringa_binario
-        stringa_binario = stringa_binario + seconda_stringa_binario
+        # Salvo i valori presi dalla memoria ([2:] per rimuovere 0x)
+        lista_byte = [hex(self.diz_dati[chiave_in_diz+3])[2:],hex(self.diz_dati[chiave_in_diz+2])[2:], 
+                      hex(self.diz_dati[chiave_in_diz+1])[2:], hex(self.diz_dati[chiave_in_diz])[2:]]
+        # Unisco ogni stringa esadecimale per ottenere la stringa risultante
+        stringa_binario = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
         registro_destinazione.intero = toint(int(stringa_binario,16)) # positivo o negativo
         return "registro modificato" 
     
@@ -765,7 +729,7 @@ class Istruzioni:
     
     def la(self, registro_destinazione, indirizzo): 
         Istruzioni.incrementa_program_counter(self)
-        if type(registro_destinazione) == int:
+        if isinstance(registro_destinazione, int):
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori

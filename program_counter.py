@@ -33,82 +33,60 @@ class ProgramCounter:
     # Il metodo rende possibile simulare il program counter (il dizionario diz_indirizzi_text viene modificato)
     
     def simula_program_counter(self, istruzione: str, indirizzo_text: int, carattere_trovato: bool, valore, valore_con_tonda_trovato: bool):
+        bool_non_aggiungere_altro = False
         if istruzione in self.insieme_addi: # Simulo program counter
-            if carattere_trovato or type(valore) == bool:
-                return indirizzo_text
-            if self.range_meno_trenta <= valore <= self.range_piu_trenta:
-                return indirizzo_text
-            else:
+            bool_non_aggiungere_altro = bool(carattere_trovato or isinstance(valore,bool) or (self.range_meno_trenta <= valore <= self.range_piu_trenta)) 
+            if not bool_non_aggiungere_altro:
                 indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
-                return indirizzo_text
-        if istruzione == self.istruzione_addu:
-            if type(valore) == bool and not carattere_trovato:
-                return indirizzo_text
-            else:
+        elif istruzione == self.istruzione_addu:
+            bool_non_aggiungere_altro = bool(isinstance(valore,bool) and not carattere_trovato)
+            if not bool_non_aggiungere_altro:
                 indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
-                return indirizzo_text
-        if istruzione in self.insieme_beq_subi: # Simulo program counter
+        elif istruzione in self.insieme_beq_subi: # Simulo program counter
             if carattere_trovato:
                 indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
-                return indirizzo_text
-            if type(valore) == bool:
-                return indirizzo_text
-            if self.range_meno_trenta <= valore <= self.range_piu_trenta:
+                bool_non_aggiungere_altro = True
+            elif isinstance(valore,bool):
+                bool_non_aggiungere_altro = True
+            elif self.range_meno_trenta <= valore <= self.range_piu_trenta:
                 indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
-                return indirizzo_text
-            else:
+                bool_non_aggiungere_altro = True
+            if not bool_non_aggiungere_altro:
                 indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2) 
-                return indirizzo_text
-        if istruzione == self.istruzione_la: # Simulo program counter
-            if carattere_trovato or type(valore) == bool:
-                return indirizzo_text
-            if self.range_meno_trenta <= valore <= self.range_sessanta:
-                if valore_con_tonda_trovato:
-                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
-                return indirizzo_text
-            else:
+        elif istruzione == self.istruzione_la: # Simulo program counter
+            if carattere_trovato or isinstance(valore,bool):
+                bool_non_aggiungere_altro = True
+            if not bool_non_aggiungere_altro:
+                if self.range_meno_trenta <= valore <= self.range_sessanta:
+                    if valore_con_tonda_trovato:
+                        indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
+                else:
+                    if valore_con_tonda_trovato:
+                        indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
+                    else:
+                        indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
+        elif istruzione in self.insieme_ori: # Simulo program counter
+            bool_non_aggiungere_altro = bool(carattere_trovato or isinstance(valore,bool) or (self.zero <= valore <= self.range_sessanta)) 
+            if not bool_non_aggiungere_altro:
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
+        elif istruzione in self.insieme_save_load: # Simulo program counter
+            bool_non_aggiungere_altro = bool(carattere_trovato or isinstance(valore,bool) or (self.range_meno_trenta <= valore <= self.range_piu_trenta))
+            if not bool_non_aggiungere_altro:
                 if valore_con_tonda_trovato:
                     indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
                 else:
                     indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
-                return indirizzo_text
-        if istruzione in self.insieme_ori: # Simulo program counter
-            if carattere_trovato or type(valore) == bool:
-                return indirizzo_text
-            if self.zero <= valore <= self.range_sessanta:
-                return indirizzo_text
-            else:
-                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2) 
-                return indirizzo_text
-        if istruzione in self.insieme_save_load: # Simulo program counter
-            if carattere_trovato or type(valore) == bool:
-                return indirizzo_text
-            if self.range_meno_trenta <= valore <= self.range_piu_trenta: 
-                return indirizzo_text
-            else:
-                if valore_con_tonda_trovato:
-                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 2)
-                else:
-                    indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1) 
-                return indirizzo_text
-        if istruzione == self.istruzione_li: # Simulo program counter
-            if carattere_trovato or type(valore) == bool:
-                return indirizzo_text
-            if self.range_meno_trenta <= valore <= self.range_sessanta:
-                return indirizzo_text
-            else:
+        elif istruzione == self.istruzione_li: # Simulo program counter
+            bool_non_aggiungere_altro = bool(carattere_trovato or isinstance(valore,bool) or (self.range_meno_trenta <= valore <= self.range_sessanta)) 
+            if not bool_non_aggiungere_altro:
                 indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
-                return indirizzo_text
-        if istruzione in self.insieme_bge: # Simulo program counter
-            if carattere_trovato or type(valore) == bool:
+        elif istruzione in self.insieme_bge: # Simulo program counter
+            bool_non_aggiungere_altro = bool(carattere_trovato or isinstance(valore,bool) or (self.range_meno_trenta <= valore <= self.range_piu_trenta))
+            if bool_non_aggiungere_altro:
                 indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
-                return indirizzo_text
-            if self.range_meno_trenta <= valore <= self.range_piu_trenta:
-                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 1)
-                return indirizzo_text
             else:
-                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 3) 
-                return indirizzo_text
+                indirizzo_text = ProgramCounter.trova_indirizzo_testo_corretto(self, indirizzo_text, 3)
+        return indirizzo_text
        
     # Il metodo si occupa di aggiungere gli indirizzi corretti, dovuti alle pseudo-istruzioni,
     # nel dizionario contenente gli indirizzi del testo (program counter per quella istruzione)   

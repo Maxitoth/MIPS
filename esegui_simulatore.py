@@ -1,6 +1,7 @@
+import json
+import argparse 
 import simulatore
-import json 
-import argparse
+
 
 
 
@@ -55,13 +56,13 @@ def avvia_simulatore(inputs):
     json_object_hazards = json.dumps(dizionario_hazards) # hazards
     json_object_clocks = json.dumps(simulazione[1]) # cicli di clock
     # Per scrivere i json file
-    with open("pipeline.json", "w") as outfile:
+    with open("pipeline.json", "w", encoding = 'utf-8') as outfile:
         outfile.write(json_object_pipeline)
-    with open("rappresentazione.json", "w") as outfile:
+    with open("rappresentazione.json", "w", encoding = 'utf-8') as outfile:
         outfile.write(json_object_rappresentazione)
-    with open("hazards.json", "w") as outfile:
+    with open("hazards.json", "w", encoding = 'utf-8') as outfile:
         outfile.write(json_object_hazards)
-    with open("clocks.json", "w") as outfile:
+    with open("clocks.json", "w", encoding = 'utf-8') as outfile:
         outfile.write(json_object_clocks)
         
     # Genero un file excel con da due a quattro fogli (il primo booleano a True per fogli riguardanti esecuzione e rappresentazione pipeline, il secondo per gli hazards e cicli di clock)
@@ -78,3 +79,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
