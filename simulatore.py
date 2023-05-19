@@ -256,7 +256,7 @@ class Simulatore:
         self.program_counter = program_counter.ProgramCounter() # Oggetto di classe ProgramCounter usato per ottenere il dizionario che contiene gli indirizzi del testo
         self.diz_indirizzi = {} # dizionario che conterrà tutti gli indirizzi iniziali delle strutture dati trovate in input (parte .data)
         self.diz_righe = {} # dizionario che conterrà come chiave indice riga e come valore la riga del testo
-        self.bool_forwarding = False # booleano per salvare il fatto che si applica forwarding o self.meno
+        self.bool_forwarding = False # booleano per salvare il fatto che si applica forwarding o meno
         self.ciclo_di_clock = 0 # valore che indica il ciclo di clock in cui cercare i valori nella pipeline (a 0 non si esegue la ricerca)
         self.diz_hazards = {} # dizionario che conterrà tutti i data hazard e control hazards (uno degli output utilizzato per generare il file hazards.json e l'excel associato)
         self.bool_clock_trovato = False # booleano che indica se abbiamo trovato il ciclo di clock richiesto in input
