@@ -4,9 +4,10 @@
 
 class Registro:
     
-    def __init__(self, nome, intero):
+    def __init__(self, nome, intero, nome_numerico):
         self.nome = nome
         self.intero = intero
+        self.nome_numerico = nome_numerico
         self.istruzione_mips = ""
         self.fetch = True
         self.decode = False
