@@ -8,14 +8,14 @@ import simulatore
 # la funzione serve a passare parametri in input nella console  
 def argomenti_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument("testo", help =" il nome del file di testo con il codice mips (esempio: testo.txt, Nota: deve esserci .txt).", type=str)
-    parser.add_argument("-dec","--decode", help =" il booleano decode. Se inserito allora le istruzioni branch decidono se è necessario eseguire il salto in fase di execute piuttosto che in fase di decode", action= "store_false")
-    parser.add_argument("-f","--forwarding", help =" il booleano per stabilire se usare la tecnica di forwarding, se inserito si esegue il codice con forwarding", action= "store_true")
-    parser.add_argument("-pc","--program_counter", help =" il booleano per decidere se calcolare il program counter, se inserito viene calcolato il program counter", action= "store_true")
-    parser.add_argument("-m","--messaggio", help =" il booleano per decidere se visualizzare messaggi riguardanti gli stalli trovati, se inserito vengono mostrati i messaggi", action= "store_true")
-    parser.add_argument("-cl", "--ciclo_clock", help =" l'intero che indica il ciclo di clock dove cercare le istruzioni nella pipeline (deve essere maggiore o uguale a 5 oppure 0 se non si vuole eseguire la ricerca) di default è a 0", type=int)
-    parser.add_argument("-exp","--excel_pipeline", help =" booleano per decidere se generare un excel con due fogli. Uno ha l'esecuzione del codice e l'altro ha la rappresentazione delle istruzioni nelle fasi della pipeline, se inserito viene generato il file excel", action= "store_true")
-    parser.add_argument("-exh","--excel_hazards", help =" booleano per decidere se generare altri due fogli excel con un foglio avente gli hazards trovati e l'altro foglio con numero di cicli di clock, bolle data e control hazard totali, cicli di clock in ogni parte del programma e istruzioni nella pipeline. Se inserito viene generato il file excel (Se viene inserito dopo -exp allora viene generato un unico excel con tutti e quattro i fogli). Ricorda di installare xlsxwriter (pip install xlsxwriter)", action= "store_true")
+    parser.add_argument("testo", help ="Questa opzione indica il nome del file di testo con il codice mips (esempio: testo.txt, Nota: deve esserci .txt).", type=str)
+    parser.add_argument("-dec","--decode", help ="Questa opzione, se inserita, permette alle istruzioni branch di decidere se è necessario eseguire il salto in fase di execute piuttosto che in fase di decode", action= "store_false")
+    parser.add_argument("-f","--forwarding", help ="Questa opzione serve a stabilire se usare la tecnica di forwarding, se inserita si esegue il codice con forwarding", action= "store_true")
+    parser.add_argument("-pc","--program_counter", help ="Questa opzione serve per decidere se calcolare il program counter, se inserita viene calcolato il program counter", action= "store_true")
+    parser.add_argument("-m","--messaggio", help ="Questa opzione serve per decidere se visualizzare messaggi riguardanti gli stalli trovati, se inserita vengono mostrati i messaggi", action= "store_true")
+    parser.add_argument("-cl", "--ciclo_clock", help ="Questa opzione, se inserita insieme ad un intero, indica il ciclo di clock dove cercare le istruzioni nella pipeline (deve essere maggiore o uguale a 5 oppure 0 se non si vuole eseguire la ricerca) di default è a 0", type=int)
+    parser.add_argument("-exp","--excel_pipeline", help ="Questa opzione serve per decidere se generare un excel con due fogli. Uno ha l'esecuzione del codice e l'altro ha la rappresentazione delle istruzioni nelle fasi della pipeline, se inserito viene generato il file excel. Ricorda di installare xlsxwriter (pip install xlsxwriter)", action= "store_true")
+    parser.add_argument("-exh","--excel_hazards", help ="Questa opzione serve per decidere se generare altri due fogli excel con un foglio avente gli hazards trovati e l'altro foglio con numero di cicli di clock, bolle data e control hazard totali, cicli di clock in ogni parte del programma e istruzioni nella pipeline. Se inserito viene generato il file excel (Se viene inserito dopo -exp allora viene generato un unico excel con tutti e quattro i fogli). Ricorda di installare xlsxwriter (pip install xlsxwriter)", action= "store_true")
     args = parser.parse_args()
     if not args.ciclo_clock:
         args.ciclo_clock = 0 
