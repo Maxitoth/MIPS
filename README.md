@@ -1,7 +1,10 @@
 # MIPS
 
 Viene simulato il codice mips inserito nel file di testo testo.txt. Questo per ottenere dati relativi alla pipeline.
-Il codice deve essere stato testato su Mars ( compilato ed eseguito). Deve risultare senza errori. 
+Il codice deve essere stato testato su Mars (compilato ed eseguito). Deve risultare senza errori. 
+
+Per avviare il programma digitare su console di comandi "python esegui_simulatore.py testo.txt" 
+(python o python3, testo.txt è il path del testo)
 
 Sul file esegui_simulatore.py è presente la funzione main e i valori in input inoltre vengono compilati quattro json file con tutti i dati.
 Il programma si deve avviare tramite shell e ci sono vari valori in input che si possono inserire in riga di comando anche se tutti hanno un valore di default.
