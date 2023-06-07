@@ -47,6 +47,6 @@ In istruzioni_mips.py:
   3) A seconda del tipo di istruzione prendere come riferimento istruzioni già implementate a meno che sia un nuovo tipo di istruzione.
   4) Ogni metodo ha gli input dell'istruzione simulata (beq ha 3 input, beqz ha 2 input, ecc... tranne per alcuni casi tipo le istruzioni jump il ragionamento è sempre questo)
   5) Esempio su come iniziare: Se ho beq $t1, $t2, Cycl il metodo é di questo tipo: beq(self, registro_uno_o_intero_uno, registro_due_o_intero_due, stringa). Implemento i vari controlli (se ho un registro o un intero) e controllo se registro_uno_o_intero_uno == registro_due_o_intero_due. Siccome si tratta di un istruzione di salto devo restituire un booleano (salto) a True o False oltre alla stringa. Per istruzioni non di salto il ragionamento è lo stesso solo che aggiorno l'intero del registro (chiamato di solito registro_destinazione) e restituisco una stringa (non è necessario l'output)
-  6) Se un istruzione può essere scritta in piu modi si usa una tupla (tupla_valori). Bisogna prendere i valori dalla tupla ma il ragionamento è lo stesso.
+  6) Se un istruzione può essere scritta in piu modi (diverso numero di input) si usa una tupla (tupla_valori). Bisogna prendere i valori dalla tupla ma il ragionamento è lo stesso.
   7) Se l'istruzione permette salti nel testo senza uso di labels ma registri (la jalr per esempio) bisognerà restituire un intero ( la stringa non è presente nell'istruzione in questione e servirà l'implementazione del program counter)
  
