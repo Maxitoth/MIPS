@@ -65,7 +65,6 @@ def sll_bit(esadecimale, val):
 class Istruzioni: 
     
     def __init__(self):
-        self.diz_indirizzi = {}
         self.ultimo_valore_possibile = 272629759
         # dizionario con 65536 valori per simulare la memoria iniziale (valori positivi)
         self.diz_dati = {key: 0 for key in range(268435456, 268500993)} 
