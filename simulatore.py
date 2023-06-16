@@ -10,7 +10,7 @@
 # Il tipo float o altri non sono gestiti
 # Non sono presenti tutte le istruzioni (usate quelle trovate in self.insieme_istruzioni)
 
-# in ogni riga del testo deve esserci alself.meno uno spazio o una virgola tra ogni valore altrimenti il testo non
+# in ogni riga del testo deve esserci almeno uno spazio o una virgola tra ogni valore altrimenti il testo non
 # puo essere letto correttamente
 # Non vanno lasciati spazi all'inizio di ogni riga:
 # Scrivete "add $a1, $a2, 10" e non " add $a1, $a2, 10"
