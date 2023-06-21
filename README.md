@@ -39,6 +39,7 @@ In program_counter.py
 Esempio: l'istruzione add, se sommato un numero che non é nel range da 32767 a -32768 genera 2 pseudo-istruzioni.
 
 Posso poi mettere in insiemi comuni le istruzioni che hanno lo stesso numero di pseudoistruzioni per quelle determinate casistiche. Aggiungere a indirizzo_text + 4 per ogni pseudo-istruzione.
+Per casi nuovi aggiungere una variabile che contiene il nome dell'istruzione come stringa. Gestire il nuovo caso aggiungendo un nuova condizione (elif) con il verificarsi della nuova variabile
 
 In istruzioni_mips.py:
 
