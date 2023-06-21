@@ -33,7 +33,7 @@ Per le jump manca solo la jr.
 2) Le istruzioni di branch and link sono un caso particolare non gestito. Bisognerebbe molto probabilmente modificare il codice in trova_valori_per_pipeline. 
 
 In program_counter.py
-(Opzionale ma necessario se si esegue un istruzione di tipo jump o branch che permette un salto utilizzando l'indirizzo dell'istruzione nel testo (sostanzialmente il program counter) o per istruzioni load e save con nomi di testo (esempio: "la $a0, main" e "main: ..." è una riga del testo (non in .data)).
+(Opzionale ma necessario se si esegue un istruzione di tipo jump o branch che permette un salto utilizzando l'indirizzo dell'istruzione nel testo (sostanzialmente il program counter) o per istruzioni load e save con nomi di testo (esempio: "la $a0, main" e "main: ..." è una riga del testo (non in .data)). Il program counter deve essere simulato per ogni istruzione aggiunta, altrimenti non sarà possibile utilizzare gli input come nell'esempio (la $a0, main).
 
 1) Bisogna capire quante pseudo-istruzioni vengono generate a seconda della casistica dell'input inserito per ogni istruzione. Le istruzioni infatti possono generare da 0 a più pseudoistruzioni. Quindi dovrei capire se quella determinata istruzione genera un certo numero di pseudoistruzioni per certi input.
 Esempio: l'istruzione add, se sommato un numero che non é nel range da 32767 a -32768 genera 2 pseudo-istruzioni.
