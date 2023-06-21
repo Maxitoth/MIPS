@@ -311,6 +311,36 @@ class Istruzioni:
         # rappresentazione a 32 bit
         registro_destinazione.intero = toint(int(stringa_esadecimale, 16))      
         return "registro modificato"
+
+    # Il metodo si occupa di simulare l'istruzione mips sle
+    
+    def sle(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
+        Istruzioni.incrementa_program_counter(self)
+        if isinstance(registro_destinazione,int):
+            return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
+            # è un operazione valida ma non cambia nulla durante l'esecuzione.
+            # Evito possibili errori
+        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
+            if primo_registro_o_intero <= secondo_registro_o_intero:
+                registro_destinazione.intero = 1
+            else:
+                registro_destinazione.intero = 0
+        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
+            if primo_registro_o_intero.intero <= secondo_registro_o_intero.intero:
+                registro_destinazione.intero = 1
+            else:
+                registro_destinazione.intero = 0
+        elif isinstance(primo_registro_o_intero,int):
+            if primo_registro_o_intero <= secondo_registro_o_intero.intero:
+                registro_destinazione.intero = 1
+            else:
+                registro_destinazione.intero = 0
+        elif isinstance(secondo_registro_o_intero,int):
+            if primo_registro_o_intero.intero <= secondo_registro_o_intero:
+                registro_destinazione.intero = 1
+            else:
+                registro_destinazione.intero = 0      
+        return "registro modificato"
     
     # Il metodo si occupa di simulare l'istruzione mips slt
     
