@@ -237,7 +237,7 @@ class Simulatore:
         self.testo = "" # testo preso in input
         self.righe = [] # lista che conterrà le righe del testo
         self.testo_modificato = [] # lista che conterrà liste per ogni riga del testo
-        self.insieme_istruzioni = {"or","and","ori","andi","xor","xori","subi","sub","add","addi","addiu","addu","slt","j","jal","jalr","beq","beqz","bne","bnez","bge","bgez","blt","bltz","move","lui","srl","sll","li","la","lh","lhu","lw","lb","lbu","sw","sh","sb"} # da aggiungere ogni istruzione MIPS necessaria
+        self.insieme_istruzioni = {"or","and","ori","andi","xor","xori","subi","sub","add","addi","addiu","addu","slt","sle","j","jal","jalr","beq","beqz","bne","bnez","bge","bgez","blt","bltz","move","lui","srl","sll","li","la","lh","lhu","lw","lb","lbu","sw","sh","sb"} # da aggiungere ogni istruzione MIPS necessaria
         # Per ogni istruzione serve un metodo definito nella classe Istruzioni nel file istruzioni_mips.py
         self.istruzioni_save = {"sw","sb","sh"}
         self.istruzioni_load = {"la","lw","lb","lbu","lh","lhu"}
