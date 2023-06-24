@@ -311,36 +311,6 @@ class Istruzioni:
         # rappresentazione a 32 bit
         registro_destinazione.intero = toint(int(stringa_esadecimale, 16))      
         return "registro modificato"
-
-    # Il metodo si occupa di simulare l'istruzione mips sle
-    
-    def sle(self, registro_destinazione, primo_registro_o_intero, secondo_registro_o_intero):
-        Istruzioni.incrementa_program_counter(self)
-        if isinstance(registro_destinazione,int):
-            return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
-            # è un operazione valida ma non cambia nulla durante l'esecuzione.
-            # Evito possibili errori
-        if isinstance(primo_registro_o_intero,int) and isinstance(secondo_registro_o_intero,int):
-            if primo_registro_o_intero <= secondo_registro_o_intero:
-                registro_destinazione.intero = 1
-            else:
-                registro_destinazione.intero = 0
-        elif not isinstance(primo_registro_o_intero,int) and not isinstance(secondo_registro_o_intero,int):
-            if primo_registro_o_intero.intero <= secondo_registro_o_intero.intero:
-                registro_destinazione.intero = 1
-            else:
-                registro_destinazione.intero = 0
-        elif isinstance(primo_registro_o_intero,int):
-            if primo_registro_o_intero <= secondo_registro_o_intero.intero:
-                registro_destinazione.intero = 1
-            else:
-                registro_destinazione.intero = 0
-        elif isinstance(secondo_registro_o_intero,int):
-            if primo_registro_o_intero.intero <= secondo_registro_o_intero:
-                registro_destinazione.intero = 1
-            else:
-                registro_destinazione.intero = 0      
-        return "registro modificato"
     
     # Il metodo si occupa di simulare l'istruzione mips slt
     
@@ -680,15 +650,15 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
-        aggiungi_zeri = 2 - len(stringa_binario)
-        stringa_binario = self.zero*aggiungi_zeri + stringa_binario
-        stringa_bit = bin(int(stringa_binario[0],16))
+        stringa_esadecimale = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
+        aggiungi_zeri = 2 - len(stringa_esadecimale)
+        stringa_esadecimale = self.zero*aggiungi_zeri + stringa_esadecimale
+        stringa_bit = bin(int(stringa_esadecimale[0],16))
         if len(stringa_bit) == 6: # per esempio caso 0b1000 (8 bit a byte e se ho 1 inserisco 0xff...)
-            stringa_binario = self.stringa_lb_f+stringa_binario 
-            registro_destinazione.intero = toint(int(stringa_binario,16)) # negativo
+            stringa_esadecimale = self.stringa_lb_f+stringa_esadecimale 
+            registro_destinazione.intero = toint(int(stringa_esadecimale,16)) # negativo
         else:
-            registro_destinazione.intero = int(stringa_binario,16) # positivo
+            registro_destinazione.intero = int(stringa_esadecimale,16) # positivo
         return "registro modificato"  
     
     # Il metodo si occupa di simulare l'istruzione mips lbu
@@ -699,8 +669,8 @@ class Istruzioni:
             return "!" # se per qualche motivo il registro usato fosse $zero o $0 non viene fatto niente
             # è un operazione valida ma non cambia nulla durante l'esecuzione.
             # Evito possibili errori
-        stringa_binario = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
-        registro_destinazione.intero = int(stringa_binario,16) # positivo
+        stringa_esadecimale = hex(self.diz_dati[chiave_in_diz])[2:] # rimuovo 0x
+        registro_destinazione.intero = int(stringa_esadecimale,16) # positivo
         return "registro modificato"      
     
     # Il metodo si occupa di simulare l'istruzione mips lh
@@ -714,13 +684,13 @@ class Istruzioni:
         # Salvo i valori presi dalla memoria ([2:] per rimuovere 0x)
         lista_byte = [hex(self.diz_dati[chiave_in_diz+1])[2:],hex(self.diz_dati[chiave_in_diz])[2:]]
         # Unisco ogni stringa esadecimale per ottenere la stringa risultante
-        stringa_binario = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
-        stringa_bit = bin(int(stringa_binario[0],16))
+        stringa_esadecimale = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
+        stringa_bit = bin(int(stringa_esadecimale[0],16))
         if len(stringa_bit) == 6: # per esempio caso 0b1000 (8 bit a byte e se ho 1 inserisco 0xff...)
-            stringa_binario = self.stringa_lh_f+stringa_binario 
-            registro_destinazione.intero = toint(int(stringa_binario,16)) # negativo
+            stringa_esadecimale = self.stringa_lh_f+stringa_esadecimale 
+            registro_destinazione.intero = toint(int(stringa_esadecimale,16)) # negativo
         else:
-            registro_destinazione.intero = int(stringa_binario,16) # positivo
+            registro_destinazione.intero = int(stringa_esadecimale,16) # positivo
         return "registro modificato"
     
     # Il metodo si occupa di simulare l'istruzione mips lhu
@@ -734,8 +704,8 @@ class Istruzioni:
         # Salvo i valori presi dalla memoria ([2:] per rimuovere 0x)
         lista_byte = [hex(self.diz_dati[chiave_in_diz+1])[2:],hex(self.diz_dati[chiave_in_diz])[2:]]
         # Unisco ogni stringa esadecimale per ottenere la stringa risultante
-        stringa_binario = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
-        registro_destinazione.intero = int(stringa_binario,16) # positivo
+        stringa_esadecimale = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
+        registro_destinazione.intero = int(stringa_esadecimale,16) # positivo
         return "registro modificato"
     
     # Il metodo si occupa di simulare l'istruzione mips lw
@@ -750,8 +720,8 @@ class Istruzioni:
         lista_byte = [hex(self.diz_dati[chiave_in_diz+3])[2:],hex(self.diz_dati[chiave_in_diz+2])[2:], 
                       hex(self.diz_dati[chiave_in_diz+1])[2:], hex(self.diz_dati[chiave_in_diz])[2:]]
         # Unisco ogni stringa esadecimale per ottenere la stringa risultante
-        stringa_binario = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
-        registro_destinazione.intero = toint(int(stringa_binario,16)) # positivo o negativo
+        stringa_esadecimale = ''.join(self.zero*(2-len(x))+x for x in lista_byte)
+        registro_destinazione.intero = toint(int(stringa_esadecimale,16)) # positivo o negativo
         return "registro modificato" 
     
     # Il metodo si occupa di simulare l'istruzione mips la
