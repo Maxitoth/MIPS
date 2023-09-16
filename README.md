@@ -28,6 +28,11 @@ The Pipeline rappresentation showing all the instructions and stalls in every pi
   <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/551a484d-2b1b-4951-aa63-0eb5828d00a0" width="800" heigth="750">
 </p>
 
+The Pipeline rappresentation withouth the forwarding techinque
+
+<p align="center">
+  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/8c770ddc-5ff2-4b08-8358-fba159f26209" width="800" heigth="750">
+</p>
 
 
 
