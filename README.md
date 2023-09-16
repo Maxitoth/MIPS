@@ -22,7 +22,7 @@ The MIPS code inserted by the user in the testo.txt file:
   <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/caeb8154-20a1-4b13-8634-55c20d7abc23" width="300" heigth="250">
 </p>
 
-The Pipeline rappresentation showing all the instructions and stalls in every pipeline stage during the program execution (since the user ran the program with the -f command line argument, the forwarding technique has been applied):
+The Pipeline rappresentation showing all the instructions and stalls in every pipeline stage during the program execution (the numbers are the clock cycles). Since the user ran the program with the -f command line argument, the forwarding technique has been applied:
 
 <p align="center">
   <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/551a484d-2b1b-4951-aa63-0eb5828d00a0" width="800" heigth="750">
