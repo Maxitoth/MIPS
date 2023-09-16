@@ -1,51 +1,57 @@
-Viene simulato il codice mips inserito nel file di testo testo.txt. Questo per ottenere dati relativi alla pipeline.
-Il codice deve essere stato testato su Mars (compilato ed eseguito). Deve risultare senza errori. 
+The MIPS code entered in the text file testo.txt is simulated. This is to obtain data related to the pipeline.
+The code must have been tested on Mars (compiled and run). It should be error-free.
 
-Per avviare il programma digitare su console di comandi "python esegui_simulatore.py testo.txt" 
-(python o python3, testo.txt è il path del testo)
+To start the program, type in the command console "python esegui_simulatore.py testo.txt"
+(python or python3, testo.txt is the path of the text).
 
-Sul file esegui_simulatore.py è presente la funzione main e i valori in input inoltre vengono compilati quattro json file con tutti i dati.
-Il programma si deve avviare tramite shell e ci sono vari valori in input che si possono inserire in riga di comando anche se tutti hanno un valore di default.
-L'unico input che deve essere inserito è il testo (va inserito il path del testo in cui è presente il codice MIPS).
+On the esegui_simulatore.py file, there is the main function and the input values. In addition, four json files are compiled with all the data.
+The program should be started through shell, and there are various input values that can be entered from the command line, although all have a default value.
+The only input that must be entered is the text (enter the path of the text in which the MIPS code is present).
 
-Si può scegliere se eseguire di fare la simulazione con forwarding o meno, con le istruzioni branch a fase di decode o execute, se simulare il program counter 
-e se visualizzare quali istruzioni sono nella pipeline a un certo ciclo di clock.
-Inoltre si possono abilitare dei messaggi per ogni hazard trovato e creare un file excel con fino a quattro fogli per visualizzare i risultati ottenuti (serve installare xlsxwriter con 
+You can choose whether to run the simulation with forwarding or not, with the branch instructions in the decode or execute phase, whether to simulate the program counter
+and to display which instructions are in the pipeline at a certain clock cycle.
+Additionally, you can enable messages for each hazard found and create an excel file with up to four sheets to view the results (you need to install xlsxwriter with
 pip install xlsxwriter).
-(valori in input a riga di comando, usare python esegui_simulatore.py -h per vedere i vari input e come scriverli)
-Vengono anche mostrati i cicli di clock totali e i cicli di clock presenti in ogni ciclo loop di codice trovato. (Funziona bene con un unico ciclo e dovrebbe funzionare anche con più loop in sequenza o loop dentro a loop, ma non posso garantire che sia sempre corretto per programmi grandi o con molti loop)
+(input values from the command line, use python esegui_simulatore.py -h to see the various inputs and how to write them)
+Total clock cycles and clock cycles present in each code loop cycle are also shown. (Works well with a single loop and should also work with sequential loops or loops within loops, but I can't guarantee that it is always correct for large programs or with many loops)
 
-Il simulatore ha i suoi limiti. Questi sono scritti in vari commenti all'inizio del file simulatore.py.
-Sono anche presenti altri commenti su istruzioni_mips.py su come devono essere scritte nuove istruzioni dopo il metodo incrementa_program_counter della classe Istruzioni.
+The simulator has its limits. These are written in various comments at the beginning of the simulatore.py file (in italian eheh).
+There are also other comments on istruzioni_mips.py about how new instructions should be written after the incrementa_program_counter method of the Instructions class.
 
-I dati di tipo .byte, .half, .word, .ascii, .asciiz sono gestiti. L'unico carattere da non utilizzare è 'µ' ( usato nell'analisi dei dati .ascii e .asciiz) e la stringa vuota va usata da sola se si usano .ascii o .asciiz (note su simulatore.py nei commenti)
+Data of type .byte, .half, .word, .ascii, .asciiz are managed. The only character not to be used is 'µ' (used in the analysis of .ascii and .asciiz data) and the empty string should be used alone if .ascii or .asciiz are used (notes on simulatore.py in the comments).
 
-Le pseudoistruzioni non vengono incluse o aggiunte nel testo. Quindi se si esegue un salto ad un indirizzo di una pseudoistruzione (possibile tramite istruzione jalr ) ci sarà sicuramente un errore durante la simulazione del codice mips. 
+Pseudoinstructions are not included or added to the text. So if you jump to the address of a pseudoinstruction (possible through the jalr instruction), there will certainly be an error during the MIPS code simulation.
 
-Per aggiungere istruzioni:
+To add instructions:
 
-In simulatore.py
+(REQUIRED PART) In simulatore.py:
 
-1) Aggiungere l'istruzione nell'insieme insieme_istruzioni (se l'istruzione é di tipo jump o branch aggiungerla anche all'insieme corrispondente, lo stesso vale per store e load se volete aggiungere istruzioni particolare come per esempio lwl. In generale tutti i casi normali sono stati gestiti (lb, lbu, lh, lhu, lw, sb, sh, sw))
-Per le jump manca solo la jr.
-2) Le istruzioni di branch and link sono un caso particolare non gestito. Bisognerebbe molto probabilmente modificare il codice in trova_valori_per_pipeline. 
+Add the instruction to the instruction set (if the instruction is of jump or branch type also add it to the corresponding set, the same goes for store and load if you want to add particular instructions like for example lwl. In general, all normal cases have been managed (lb, lbu, lh, lhu, lw, sb, sh, sw)). Only the jr is missing for the jumps.
+The branch and link instructions are a particular case not managed. The code in trova_valori_per_pipeline would probably need to be modified.
 
-In program_counter.py
-(Opzionale ma necessario se si esegue un istruzione di tipo jump o branch che permette un salto utilizzando l'indirizzo dell'istruzione nel testo (sostanzialmente il program counter) o per istruzioni load e save con nomi di testo (esempio: "la $a0, main" e "main: ..." è una riga del testo (non in .data)). Per avere un valore del program counter corretto è necessario che per le istruzioni del testo sia effettivamente simulato il numero di pseudo-istruzioni generate. Se il testo contiene istruzioni per cui il program counter non è simulato è bene non aggiungere l'opzione -pc ed è necessario non fare uso di input particolari descritti ("la $a0, main" o istruzioni "jal e jalr") in quanto i valori saranno errati e l'esecuzione darà risultati errati o si fermerà con errori.
+(REQUIRED PART) In istruzioni_mips.py:
 
-1) Bisogna capire quante pseudo-istruzioni vengono generate a seconda della casistica dell'input inserito per ogni istruzione. Le istruzioni infatti possono generare da 0 a più pseudoistruzioni. Quindi dovrei capire se quella determinata istruzione genera un certo numero di pseudoistruzioni per certi input.
-Esempio: l'istruzione add, se sommato un numero che non é nel range da 32767 a -32768 genera 2 pseudo-istruzioni.
+1) Add a method by naming it like the MIPS instruction to simulate.
+2) The method must always start with Instructions.increment_program_counter(self) (even if the program counter is not simulated)
+3) Depending on the type of instruction, refer to already implemented instructions unless it is a new type of instruction.
+4) Each method has the inputs of the simulated instruction (beq has 3 inputs, beqz has 2 inputs, etc... except for some cases like the jump instructions, the reasoning is always this)
+5) Example of how to start: If I have beq $t1, $t2, Cycl the method is of this type: beq(self, register_one_or_integer_one, register_two_or_integer_two, string). Implement the various checks (if I have a register or an integer) and check if register_one_or_integer_one == register_two_or_integer_two. Since this is a jump instruction, I need to return a boolean (jump) as True or False in addition to the string. For non-jump instructions, the reasoning is the same, just update the integer of the register (usually called destination register) and return a string (output is not necessary).
+6) If an instruction can be written in multiple ways (different number of inputs) a tuple is used (tuple_values). You need to get the values from the tuple, but the reasoning is the same.
+7) If the instruction allows jumps in the text without the use of labels but registers (like jalr for example) you will need to return an integer (the string is not necessary) that indicates the position to jump to. This is because an instruction like "jalr $t1, $t2" has the value contained in $t2 as an address (which could be any value) while "j label" simply uses the label address.
 
-Posso poi mettere in insiemi comuni le istruzioni che hanno lo stesso numero di pseudoistruzioni per quelle determinate casistiche. Aggiungere a indirizzo_text + 4 per ogni pseudo-istruzione.
-Per casi nuovi aggiungere una variabile che contiene il nome dell'istruzione come stringa. Gestire il nuovo caso aggiungendo un nuova condizione (elif) con il verificarsi della nuova variabile (istruzione == nuova variabile). Adesso dipende tutto dagli input valutati: per esempio un istruzione dell'insieme addi non aggiunge nuove pseudo-istruzioni quando il terzo input è un registro (il valore è un booleano) o 
-un carattere (if carattere_trovato), o quando il terzo input è un intero che si trova nel range 32767 a -32768 (self.range_meno_trenta <= valore <= self.range_piu_trenta, il range dipende dall'istruzione valutata) (se è esadecimale viene comunque convertito precedentemente in decimale e deve rispettare questo range), altrimenti sono necessarie due pseudo-istruzioni quindi viene chiamato il metodo "trova_indirizzo_testo_corretto(self, indirizzo_text, 2)" che deve sempre contenere self, indirizzo_text e il numero di pseudo-istruzioni da aggiungere, in questo caso 2. Se più istruzioni generano lo stesso numero di pseudo-istruzioni per gli stessi input allora basta creare un insieme contenente i nomi delle istruzioni e cambiare la condizione (elif) con "istruzione in nuovo insieme".
+(OPTIONAL PART) In program_counter.py:
+This is necessary if you run a jump or branch type instruction that allows a jump using the instruction address in the text (essentially the program counter) or for load and save instructions with text names (example: "la $a0, main" and "main: ..." is a line of text (not in .data). To have a correct program counter value, it is necessary that the number of pseudo-instructions generated for the text instructions is actually simulated. If the text contains instructions for which the program counter is not simulated, it is best not to add the -pc option and it is necessary not to make use of particular described inputs ("la $a0, main" or "jal and jalr" instructions) as the values will be wrong and the execution will give incorrect results or will stop with errors.
 
-In istruzioni_mips.py:
+You need to understand how many pseudo-instructions are generated depending on the type of input entered for each instruction. Instructions can generate from 0 to more pseudo-instructions. So you should understand if that particular instruction generates a certain number of pseudo-instructions for certain inputs.
+Example: the add instruction, if a number is added that is not in the range from 32767 to -32768, generates 2 pseudo-instructions.
+You can then put instructions that have the same number of pseudo-instructions for those particular situations in common sets. Add to address_text + 4 for each pseudo-instruction.
+For new cases, add a variable that contains the name of the instruction as a string. Handle the new case by adding a new condition (elif) with the occurrence of the new variable (instruction == new variable). 
+Now it all depends on the evaluated inputs: for example, an addi set instruction does not add new pseudo-instructions when the third input is a register (the value is a boolean) or
+a character (if character_found), or when the third input is an integer that is in the range 32767 to -32768 (self.range_meno_trenta <= value <= self.range_piu_trenta, the range depends on the evaluated instruction) (if it is hexadecimal it is still previously converted to decimal and must respect this range), otherwise two pseudo-instructions are necessary, so the method "trova_indirizzo_testo_corretto(self, address_text, 2)" is called, which must always contain self, address_text, and the number of pseudo-instructions to add, in this case 2. If more instructions generate the same number of pseudo-instructions for the same inputs then just create a set containing the names of the instructions and change the condition (elif) with "instruction in new set".
 
-  1) Aggiungere un metodo chiamandolo come l'istruzione mips da simulare.
-  2) Il metodo deve sempre cominciare con Istruzioni.incrementa_program_counter(self) (anche se il program counter non è simulato) 
-  3) A seconda del tipo di istruzione prendere come riferimento istruzioni già implementate a meno che sia un nuovo tipo di istruzione.
-  4) Ogni metodo ha gli input dell'istruzione simulata (beq ha 3 input, beqz ha 2 input, ecc... tranne per alcuni casi tipo le istruzioni jump il ragionamento è sempre questo)
-  5) Esempio su come iniziare: Se ho beq $t1, $t2, Cycl il metodo é di questo tipo: beq(self, registro_uno_o_intero_uno, registro_due_o_intero_due, stringa). Implemento i vari controlli (se ho un registro o un intero) e controllo se registro_uno_o_intero_uno == registro_due_o_intero_due. Siccome si tratta di un istruzione di salto devo restituire un booleano (salto) a True o False oltre alla stringa. Per istruzioni non di salto il ragionamento è lo stesso solo che aggiorno l'intero del registro (chiamato di solito registro_destinazione) e restituisco una stringa (non è necessario l'output)
-  6) Se un istruzione può essere scritta in piu modi (diverso numero di input) si usa una tupla (tupla_valori). Bisogna prendere i valori dalla tupla ma il ragionamento è lo stesso.
-  7) Se l'istruzione permette salti nel testo senza uso di labels ma registri (la jalr per esempio) bisognerà restituire un intero ( la stringa non è presente nell'istruzione in questione e servirà l'implementazione del program counter)
+
+These are just some instructions on how to proceed with the simulator and instructions on how to add new MIPS instructions. The current simulator is incomplete. Other instructions need to be added.
+
+This simulator is useful to learn how pipelining works. Have fun using it.
+
+
