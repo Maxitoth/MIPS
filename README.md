@@ -13,6 +13,7 @@ These are all the instructions supported by the simulator: or, and, ori, andi, x
 These are all the data structures data types supported: .bytes, .half, .word, .ascii, .asciiz .
 
 Here is an example on what the program can find:
+
 The user runs the program in the shell using: "python esegui_simulatore.py -f -cl 14 testo.txt"
 
 
