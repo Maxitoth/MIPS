@@ -14,4 +14,4 @@ These are all the data structures data types supported: .bytes, .half, .word, .a
 
 Here is an example on what the program can find:
 The user runs the program in the shell using: "python esegui_simulatore.py -f -cl 14 testo.txt"
-<img src= "https://github.com/Maxitoth/MIPS/assets/105019914/caeb8154-20a1-4b13-8634-55c20d7abc23" width="100" heigth="100">
+<img src= "https://github.com/Maxitoth/MIPS/assets/105019914/caeb8154-20a1-4b13-8634-55c20d7abc23" width="300" heigth="300">
