@@ -43,7 +43,7 @@ All data and control hazards that were encountered during execution or that coul
 The instructions in the Pipeline stages at the fourtheenth clock cycle:
 
 <p align="center">
-  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/6c739e04-f8ba-4f21-8211-490baa37edde" width="400" heigth="350">
+  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/6c739e04-f8ba-4f21-8211-490baa37edde" width="800" heigth="750">
 </p>
 
 
