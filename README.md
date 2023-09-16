@@ -37,9 +37,8 @@ The Pipeline rappresentation without the forwarding techinque:
 All data and control hazards that were encountered during execution or that could have occured:
 
 <p align="center">
-  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/18fe2cab-281b-4f18-a84b-d46408891121" width="400" heigth="350">
+  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/89aedf07-5b33-4684-9773-4af9d2ae5d99" width="400" heigth="350">
 </p>
-
 
 
 
