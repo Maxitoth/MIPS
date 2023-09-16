@@ -25,7 +25,7 @@ The MIPS code inserted by the user in the testo.txt file:
 The Pipeline rappresentation showing all the instructions and stalls in every pipeline stage during the program execution (since the user ran the program with the -f command line argument, the forwarding technique has been applied):
 
 <p align="center">
-  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/551a484d-2b1b-4951-aa63-0eb5828d00a0" width="300" heigth="250">
+  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/551a484d-2b1b-4951-aa63-0eb5828d00a0" width="400" heigth="350">
 </p>
 
 
