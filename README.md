@@ -13,3 +13,4 @@ These are all the instructions supported by the simulator: or, and, ori, andi, x
 These are all the data structures data types supported: .bytes, .half, .word, .ascii, .asciiz .
 
 Here is an example on what the program can find:
+![testo](https://github.com/Maxitoth/MIPS/assets/105019914/af00fc19-f852-4db0-bdbb-16fb5a63773b)
