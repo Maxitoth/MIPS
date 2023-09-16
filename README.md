@@ -34,6 +34,12 @@ The Pipeline rappresentation without the forwarding techinque:
   <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/8c770ddc-5ff2-4b08-8358-fba159f26209" width="800" heigth="750">
 </p>
 
+All data and control hazards that were encountered during execution or that could have occured:
+
+<p align="center">
+  <img src= "https://github.com/Maxitoth/MIPS/assets/105019914/18fe2cab-281b-4f18-a84b-d46408891121" width="800" heigth="750">
+</p>
+
 
 
 
